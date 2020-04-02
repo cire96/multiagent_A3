@@ -1,7 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
+
+using NPBehave;
 
 
 namespace UnityStandardAssets.Vehicles.Car
@@ -17,6 +18,9 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] friends; // use these to avoid collisions
 
         public GameObject my_goal_object;
+        public Root behaviorTree;
+        public Vector3 goal_pos;
+        public Blackboard blackboard;
 
         private void Start()
         {
@@ -29,37 +33,91 @@ namespace UnityStandardAssets.Vehicles.Car
             // ...
 
             Vector3 start_pos = transform.position; // terrain_manager.myInfo.start_pos;
-            Vector3 goal_pos = terrain_manager.myInfo.goal_pos;
+            goal_pos = terrain_manager.myInfo.goal_pos;
 
             friends = GameObject.FindGameObjectsWithTag("Player");
+            //ownBlackBoard = new Blackboard();
 
-            List<Vector3> my_path = new List<Vector3>();
+            behaviorTree = new Root(
+                new Selector(
+                    new BlackboardCondition("NotOnGoal", Operator.IS_EQUAL, true, Stops.SELF,
+                        new Selector(
+                            new BlackboardCondition("Wall",Operator.IS_EQUAL, true ,Stops.SELF,
+                                new Action(()=>rePlan())
+                            ), 
+                
+                            new BlackboardCondition("Car",Operator.IS_EQUAL,true,Stops.SELF,
+                                new Sequence(
+                                    new Action(()=>calculateBearing()),
+                                    new Action(()=>Avoid())
+                                )
+                            ),
+                        
+                            new Action(()=>followPath())
 
-            my_path.Add(start_pos);
+                        )
+                    ),
+                    new Action(()=>{
+                        //behaviorTree.Stop()
+                    })
 
-            for (int i = 0; i < 3; i++)
-            {
-                Vector3 waypoint = start_pos + new Vector3(UnityEngine.Random.Range(-50.0f, 50.0f), 0, UnityEngine.Random.Range(-30.0f, 30.0f));
-                my_path.Add(waypoint);
-            }
-            my_path.Add(goal_pos);
+                    
 
+                )
+            );
+            blackboard = behaviorTree.Blackboard;
 
-            // Plot your path to see if it makes sense
-            // Note that path can only be seen in "Scene" window, not "Game" window
-            Vector3 old_wp = start_pos;
-            foreach (var wp in my_path)
-            {
-                //Debug.DrawLine(old_wp, wp, Color.red, 100f);
-                old_wp = wp;
-            }
+            blackboard["NotOnGoal"]=true;
+            blackboard["Wall"]=false;
+            blackboard["Car"]=false;
+#if UNITY_EDITOR
+            Debugger debugger = (Debugger)this.gameObject.AddComponent(typeof(Debugger));
+            debugger.BehaviorTree = behaviorTree;
+#endif
+
+            behaviorTree.Start();
+            
 
             
         }
 
+        void rePlan(){
+            Debug.Log("replan");
+        }
+
+        void calculateBearing(){
+            Debug.Log("calculateBearing");
+        }
+
+        void Avoid(){
+            Debug.Log("Avoid");
+        }
+
+        void followPath(){
+            Debug.Log("followPath");
+        }
+
+
+
 
         private void FixedUpdate()
         {
+
+            if(10>Vector3.Distance(transform.position,goal_pos)){
+                blackboard["NotOnGoal"]=false;
+            }
+            LayerMask mask = LayerMask.GetMask("Default");
+            Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
+            RaycastHit rayHit;
+            bool hit = Physics.Raycast(transform.position,steeringPoint,out rayHit,20.0f, mask);
+            if(hit){
+                Debug.DrawRay(transform.position, steeringPoint * rayHit.distance, Color.yellow);
+                blackboard["Car"]=true;
+            }else{
+                Debug.DrawRay(transform.position, steeringPoint * 20.0f, Color.yellow);
+                blackboard["Car"]=false;
+            }
+
             // Execute your path here
             // ...
 

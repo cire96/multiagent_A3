@@ -1,5 +1,5 @@
 sceneSetups:
-- path: Assets/Scenes/AI Soccer.unity
+- path: Assets/NPBehave/Examples/Scenes/NPBehaveExample_HelloBlackboardsAI.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0

@@ -165,6 +165,7 @@ public class TerrainInfo
                 if (traversability[i, j] > 0.5f)
                 {
                     GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    cube.layer = 9;
                     cube.transform.position = new Vector3(get_x_pos(i), 0.0f, get_z_pos(j));
                     cube.transform.localScale = new Vector3(x_step, wall_height, z_step);
                 }

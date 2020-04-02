@@ -88,7 +88,7 @@ public class GameManager : MonoBehaviour {
                 Vector3 goal_pos = one_car.GetComponent<UnityStandardAssets.Vehicles.Car.CarAI>().my_goal_object.transform.position;
                 if((car_pos-goal_pos).sqrMagnitude > goal_tolerance * goal_tolerance)
                 {
-                    Debug.Log("distSqr" + (car_pos - goal_pos).sqrMagnitude);
+                    //Debug.Log("distSqr" + (car_pos - goal_pos).sqrMagnitude);
                     Debug.DrawLine(car_pos, goal_pos, Color.magenta);
                     all_cars_done = false;
                     break;

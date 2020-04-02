@@ -38,13 +38,13 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657868, g: 0.49641263, b: 0.5748171, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 11
-  m_GIWorkflowMode: 0
+  m_GIWorkflowMode: 1
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -401,7 +401,9 @@ MonoBehaviour:
     z_N: 0
     start_pos: {x: 0, y: 0, z: 0}
     goal_pos: {x: 0, y: 0, z: 0}
+    wall_height: 15
   flag: {fileID: 4434580643111549203, guid: 8e0d60321797749079c9a8ec5e90a2d6, type: 3}
+  wall_height: 15
 --- !u!4 &1358011050
 Transform:
   m_ObjectHideFlags: 0
