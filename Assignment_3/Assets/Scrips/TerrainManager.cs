@@ -44,6 +44,8 @@ public class TerrainManager : MonoBehaviour {
         Instantiate(flag, myInfo.start_pos, Quaternion.identity);
         Instantiate(flag, myInfo.goal_pos, Quaternion.identity);
 
+        GameObject.Find ("GraphObj").GetComponent<TravGraph>().makeMap();
+
 
 
     }
