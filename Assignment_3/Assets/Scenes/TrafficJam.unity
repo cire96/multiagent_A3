@@ -428,6 +428,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1377451590}
   - component: {fileID: 1377451591}
+  - component: {fileID: 1377451592}
   m_Layer: 0
   m_Name: GraphObj
   m_TagString: Untagged
@@ -462,6 +463,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrain_manager_game_object: {fileID: 1358011048}
+--- !u!114 &1377451592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1377451589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1480703b69a34c5aa0e6ba8ae946118, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1788454091
 GameObject:
   m_ObjectHideFlags: 0

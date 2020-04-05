@@ -99,9 +99,25 @@ public class Graph {
     public Node getRandomNode () {
         return nodes[new System.Random ().Next (nodes.Count)];
     }
-    /*public void setAllCost(float c){
-        foreach (Node n in nodes){
-            n.setCost(c);
+    
+    public Node FindClosestNode(Vector3 target, Graph G)
+    {
+
+        Node temp;
+        Node closest = nodes[0];//root
+        float closestDistance = Vector3.Distance(closest.getPosition(), target);
+        float checkDistance = 0f;
+
+        for (int i = 0; i < G.getSize(); i++)
+        {
+            temp = G.getNode(i);
+            checkDistance = Vector3.Distance(temp.getPosition(), target);
+            if (checkDistance < closestDistance)
+            {
+                closestDistance = checkDistance;
+                closest = temp;
+            }
         }
-    }*/
+        return closest;
+    }
 }

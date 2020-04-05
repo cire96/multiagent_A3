@@ -55,6 +55,9 @@ public class GameManager : MonoBehaviour {
             car_sphere.GetComponent<Renderer>().material.SetColor("_Color", my_color);
 
             GameObject goal_sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            goal_sphere.layer = 11; 
+            Collider c = goal_sphere.GetComponent<Collider> ();
+            c.enabled = false;
 
             nominal_pos = CircularConfiguration(i, no_of_cars, 0.8f);
             goal_sphere.transform.position = GetCollisionFreePosNear(nominal_pos, 50f);
@@ -66,6 +69,7 @@ public class GameManager : MonoBehaviour {
             new_AI = new_car.GetComponent<UnityStandardAssets.Vehicles.Car.CarAI>();
             new_AI.my_goal_object = goal_sphere;
             new_AI.terrain_manager_game_object = terrain_manager_game_object;
+            new_AI.Aggressivness = i;
 
             //new_AI.my_goal = goal_sphere.transform.position;
             //var cubeRenderer = new_sphere.GetComponent<Renderer>();
@@ -89,7 +93,7 @@ public class GameManager : MonoBehaviour {
                 if((car_pos-goal_pos).sqrMagnitude > goal_tolerance * goal_tolerance)
                 {
                     //Debug.Log("distSqr" + (car_pos - goal_pos).sqrMagnitude);
-                    Debug.DrawLine(car_pos, goal_pos, Color.magenta);
+                    //Debug.DrawLine(car_pos, goal_pos, Color.magenta);
                     all_cars_done = false;
                     break;
                 }

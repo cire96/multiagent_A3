@@ -21,6 +21,18 @@ namespace UnityStandardAssets.Vehicles.Car
         public Root behaviorTree;
         public Vector3 goal_pos;
         public Blackboard blackboard;
+        public List<int> ownPath;
+        public int targetIndex=0;
+
+        public planner1 planner;
+        public Graph mapGraph;
+
+        int backingCounter;
+        public int Aggressivness;
+
+        public GameObject carHit;
+
+
 
         private void Start()
         {
@@ -33,43 +45,39 @@ namespace UnityStandardAssets.Vehicles.Car
             // ...
 
             Vector3 start_pos = transform.position; // terrain_manager.myInfo.start_pos;
-            goal_pos = terrain_manager.myInfo.goal_pos;
+            goal_pos = my_goal_object.transform.position;
+            planner = GameObject.Find("GraphObj").GetComponent<planner1>();
+            ownPath = planner.plan(start_pos,goal_pos);
+            mapGraph=GameObject.Find("GraphObj").GetComponent<TravGraph>().mapGraph;
+
 
             friends = GameObject.FindGameObjectsWithTag("Player");
-            //ownBlackBoard = new Blackboard();
+            
+
 
             behaviorTree = new Root(
-                new Selector(
-                    new BlackboardCondition("NotOnGoal", Operator.IS_EQUAL, true, Stops.SELF,
-                        new Selector(
-                            new BlackboardCondition("Wall",Operator.IS_EQUAL, true ,Stops.SELF,
-                                new Action(()=>rePlan())
-                            ), 
-                
-                            new BlackboardCondition("Car",Operator.IS_EQUAL,true,Stops.SELF,
-                                new Sequence(
-                                    new Action(()=>calculateBearing()),
-                                    new Action(()=>Avoid())
-                                )
-                            ),
-                        
-                            new Action(()=>followPath())
-
-                        )
-                    ),
-                    new Action(()=>{
-                        //behaviorTree.Stop()
-                    })
-
+                new BlackboardCondition("NotOnGoal", Operator.IS_EQUAL, true, Stops.SELF,
+                    new Selector(
+                        new BlackboardCondition("Wall",Operator.IS_EQUAL, true ,Stops.SELF,
+                            new Action(()=>rePlan())
+                        ), 
+            
+                        new BlackboardCondition("Car",Operator.IS_EQUAL,true,Stops.SELF,
+                            new Sequence(
+                                new Action(()=>calculateBearing()),
+                                new Action(()=>Avoid())
+                            )
+                        ),
                     
+                        new Action(()=>followPath())
 
+                    )//fix action to adjust closer to goal
                 )
+
             );
             blackboard = behaviorTree.Blackboard;
 
-            blackboard["NotOnGoal"]=true;
-            blackboard["Wall"]=false;
-            blackboard["Car"]=false;
+            
 #if UNITY_EDITOR
             Debugger debugger = (Debugger)this.gameObject.AddComponent(typeof(Debugger));
             debugger.BehaviorTree = behaviorTree;
@@ -94,58 +102,101 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void followPath(){
-            Debug.Log("followPath");
+            //Debug.Log("followPath");
+            Vector3 target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
+
+            if(6f>Vector3.Distance(transform.position,target) && targetIndex<ownPath.Count-1){
+                targetIndex++;
+                target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
+            }
+
+            Vector3 carToTarget = m_Car.transform.InverseTransformPoint(target);
+            float newSteer = (carToTarget.x / carToTarget.magnitude);
+            float newSpeed; 
+            float handBrake = 0f;
+
+            if(backingCounter>0){
+                backingCounter--;
+                newSteer = -1f*newSteer;
+                newSpeed = -1;
+                m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
+                return;
+            }
+
+            float infrontOrbehind = (carToTarget.z / carToTarget.magnitude);
+            if (infrontOrbehind < 0) {
+                newSpeed = -1;
+                if (newSteer < 0) {
+                    newSteer = 1;
+                } else {
+                    newSteer = -1;
+                }
+            } else { newSpeed = 1f; }
+            //if(infrontOrbehind<0 && Mathf.Abs(newSteer)<0.1){newSteer =1;}
+
+            
+
+
+            LayerMask wallMask = LayerMask.GetMask("Wall");
+            LayerMask carMask = LayerMask.GetMask("Car");
+
+            Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
+            RaycastHit rayHit;
+            bool hit = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,6.0f, wallMask);
+            bool hitTurn = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,12.0f, wallMask);
+            bool hitCar = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,6.0f, carMask);
+            if(hitCar){
+                newSpeed = -1;
+            }
+            if(hit){
+                backingCounter = 5;
+            }else if(hitTurn){
+                newSteer = newSteer*10;
+            }
+
+            
+
+            if(10<m_Car.CurrentSpeed){
+                newSpeed=0;
+            }
+
+            Debug.DrawLine(transform.position,target,Color.magenta);
+            m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
+
+
+
+
+
+
         }
 
 
 
 
-        private void FixedUpdate()
-        {
+        private void FixedUpdate(){
+
+            blackboard["NotOnGoal"]=true;
+            blackboard["Wall"]=false;
+            blackboard["Car"]=false;
 
             if(10>Vector3.Distance(transform.position,goal_pos)){
                 blackboard["NotOnGoal"]=false;
             }
-            LayerMask mask = LayerMask.GetMask("Default");
+            LayerMask mask = LayerMask.GetMask("Car");
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             RaycastHit rayHit;
             bool hit = Physics.Raycast(transform.position,steeringPoint,out rayHit,20.0f, mask);
             if(hit){
                 Debug.DrawRay(transform.position, steeringPoint * rayHit.distance, Color.yellow);
+                carHit = rayHit.collider.transform.root.gameObject;
                 blackboard["Car"]=true;
+                Debug.Log("Hit car");
             }else{
                 Debug.DrawRay(transform.position, steeringPoint * 20.0f, Color.yellow);
                 blackboard["Car"]=false;
             }
 
-            // Execute your path here
-            // ...
-
-            // this is how you access information about the terrain
-            int i = terrain_manager.myInfo.get_i_index(transform.position.x);
-            int j = terrain_manager.myInfo.get_j_index(transform.position.z);
-            float grid_center_x = terrain_manager.myInfo.get_x_pos(i);
-            float grid_center_z = terrain_manager.myInfo.get_z_pos(j);
-
-            //Debug.DrawLine(transform.position, new Vector3(grid_center_x, 0f, grid_center_z));
-
-
-            Vector3 relVect = my_goal_object.transform.position - transform.position;
-            bool is_in_front = Vector3.Dot(transform.forward, relVect) > 0f;
-            bool is_to_right = Vector3.Dot(transform.right, relVect) > 0f;
-
-            if(is_in_front && is_to_right)
-                m_Car.Move(1f, 1f, 0f, 0f);
-            if(is_in_front && !is_to_right)
-                m_Car.Move(-1f, 1f, 0f, 0f);
-            if(!is_in_front && is_to_right)
-                m_Car.Move(-1f, -1f, -1f, 0f);
-            if(!is_in_front && !is_to_right)
-                m_Car.Move(1f, -1f, -1f, 0f);
-
-
-            // this is how you control the car
-            //m_Car.Move(1f, 1f, 1f, 0f);
+            
 
         }
     }
