@@ -28,7 +28,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public Graph mapGraph;
 
         int backingCounter;
-        public int Aggressivness;
+        public int Aggressiveness;
         public Color my_color;
 
         public GameObject carHit;
@@ -95,7 +95,19 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void calculateBearing(){
-            Debug.Log("calculateBearing");
+            CarAI otherCarAI=carHit.GetComponent<CarAI>(); 
+            if(Aggressiveness>otherCarAI.Aggressiveness){
+
+            }else{
+                Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
+                if(transform.InverseTransformPoint(vel).z>0.1){
+                    m_Car.Move(0, -1, -1, 0);
+                }else if(transform.InverseTransformPoint(vel).z<-0.1){
+                    m_Car.Move(0, 1, 1, 0);
+                }else{m_Car.Move(0, 0, 0, 0);}  
+            }
+
+            
         }
 
         void Avoid(){
@@ -186,7 +198,7 @@ namespace UnityStandardAssets.Vehicles.Car
             LayerMask mask = LayerMask.GetMask("Car");
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             RaycastHit rayHit;
-            bool hit = Physics.Raycast(transform.position,steeringPoint,out rayHit,20.0f, mask);
+            bool hit = Physics.Raycast(transform.position,steeringPoint-transform.position,out rayHit,20.0f, mask);
             if(hit){
                 Debug.DrawRay(transform.position, steeringPoint * rayHit.distance, Color.yellow);
                 carHit = rayHit.collider.transform.root.gameObject;
