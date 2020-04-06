@@ -10,13 +10,13 @@ public class planner1 : MonoBehaviour {
 
     }
 
-    public List<int> plan(Vector3 startPos, Vector3 goalPos){
+    public List<int> plan(Vector3 startPos, Vector3 goalPos, Color pathColor){
         mapGraph=GameObject.Find("GraphObj").GetComponent<TravGraph>().mapGraph;
         int start = mapGraph.FindClosestNode(startPos,mapGraph).getId();
         int goal = mapGraph.FindClosestNode(goalPos,mapGraph).getId();
         List<int> path = aStar(start,goal);
         for(int i=0;i<path.Count-1;i++){
-            Debug.DrawLine(mapGraph.getNode(path[i]).getPosition(),mapGraph.getNode(path[i+1]).getPosition(),Color.red,1000);
+            Debug.DrawLine(mapGraph.getNode(path[i]).getPosition(),mapGraph.getNode(path[i+1]).getPosition(),pathColor,1000);
         }
         return path;
     }

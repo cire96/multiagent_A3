@@ -70,6 +70,7 @@ public class GameManager : MonoBehaviour {
             new_AI.my_goal_object = goal_sphere;
             new_AI.terrain_manager_game_object = terrain_manager_game_object;
             new_AI.Aggressivness = i;
+            new_AI.my_color=my_color;
 
             //new_AI.my_goal = goal_sphere.transform.position;
             //var cubeRenderer = new_sphere.GetComponent<Renderer>();

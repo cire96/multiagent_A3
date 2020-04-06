@@ -29,6 +29,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         int backingCounter;
         public int Aggressivness;
+        public Color my_color;
 
         public GameObject carHit;
 
@@ -47,7 +48,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Vector3 start_pos = transform.position; // terrain_manager.myInfo.start_pos;
             goal_pos = my_goal_object.transform.position;
             planner = GameObject.Find("GraphObj").GetComponent<planner1>();
-            ownPath = planner.plan(start_pos,goal_pos);
+            ownPath = planner.plan(start_pos,goal_pos,my_color);
             mapGraph=GameObject.Find("GraphObj").GetComponent<TravGraph>().mapGraph;
 
 
