@@ -6099,6 +6099,7 @@ MonoBehaviour:
   newSpeed: 0
   newSteer: 0
   handBrake: 0
+  delay: 0
 --- !u!1 &5781826396937079012
 GameObject:
   m_ObjectHideFlags: 0

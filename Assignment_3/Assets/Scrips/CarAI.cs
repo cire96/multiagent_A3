@@ -28,7 +28,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public Graph mapGraph;
 
         int backingCounter;
-        float capSpeed=10f;
+        float capSpeed=20f;
 
         public int Aggressiveness;
         public Color my_color;
@@ -39,6 +39,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public float newSpeed;
         public float newSteer;
         public float handBrake;
+        public int delay;
 
 
 
@@ -95,7 +96,7 @@ namespace UnityStandardAssets.Vehicles.Car
             debugger.BehaviorTree = behaviorTree;
 #endif
             
-            behaviorTree.Start();
+            //behaviorTree.Start();
             
 
             
@@ -106,11 +107,11 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void calculateBearing(){
-            temp++;
             CarAI otherCarAI=carHit.GetComponent<CarAI>(); 
             float ourDis=Vector3.Distance(transform.position,goal_pos);
             float otherDis = Vector3.Distance(carHit.transform.position,otherCarAI.goal_pos);
-            if(ourDis>otherDis){//Aggressiveness<otherCarAI.Aggressiveness){
+            if(Aggressiveness<otherCarAI.Aggressiveness){
+                temp++;
                 Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
                 if(transform.InverseTransformDirection(vel).z>0.01){
                     m_Car.Move(0, -1, -1, 0);
@@ -118,7 +119,8 @@ namespace UnityStandardAssets.Vehicles.Car
                     m_Car.Move(0, 1, 1, 0);
                 }else{m_Car.Move(0, 0, 0, 0);}  
             }else{
-                LayerMask mask = LayerMask.GetMask("Car");
+                followPath();
+                /*LayerMask mask = LayerMask.GetMask("Car");
                 Vector3 steeringPointLeft = (transform.rotation * new Vector3(-1,0,1));
                 Vector3 steeringPointRight = (transform.rotation * new Vector3(1,0,1));
                 Vector3 steeringPointBack = (transform.rotation * new Vector3(0,0,-1));
@@ -172,7 +174,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     }
                     
                 }
-                
+                */
 
 
             }
@@ -298,27 +300,35 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
         private void FixedUpdate(){
+            if(delay > 0){
+                delay--;
+                return;
+            }
+
             if(starting){
                 blackboard["NotOnGoal"]=true;
                 blackboard["Wall"]=false;
                 blackboard["Car"]=false;
                 starting=false;
+                behaviorTree.Start();
             }
 
+            
 
             if(10>Vector3.Distance(transform.position,goal_pos)){
                 blackboard["NotOnGoal"]=false;
+                gameObject.layer = 12; //LayerMask.NameToLayer("Finished")
             }
             LayerMask mask = LayerMask.GetMask("Car");
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             RaycastHit rayHit;
-            bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,20.0f, mask);
+            bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,10.0f, mask);
             if(hit){
                 Debug.DrawRay(transform.position, steeringPoint * rayHit.distance, Color.yellow);
                 carHit = rayHit.collider.transform.root.gameObject;
                 blackboard["Car"]=true;
             }else{
-                Debug.DrawRay(transform.position, steeringPoint * 20.0f, Color.yellow);
+                Debug.DrawRay(transform.position, steeringPoint * 10.0f, Color.yellow);
                 blackboard["Car"]=false;
             }
 

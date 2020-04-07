@@ -345,7 +345,7 @@ MonoBehaviour:
   completion_time: 0
   goal_tolerance: 20
   finished: 0
-  no_of_cars: 20
+  no_of_cars: 50
   my_cars: []
 --- !u!4 &1004648171
 Transform:
