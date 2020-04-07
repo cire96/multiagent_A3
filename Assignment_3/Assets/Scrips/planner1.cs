@@ -53,7 +53,7 @@ public class planner1 : MonoBehaviour {
                     // This path to neighbor is better than any previous one. Record it!
                     cameFrom[neighbor] = current;
                     gScore[neighbor] = tentative_gScore;
-                    fScore[neighbor] = gScore[neighbor] + cost (neighbor, Goal);
+                    fScore[neighbor] = gScore[neighbor] + costUqil(neighbor, Goal);
                     if (openSet.Contains (neighbor) == false) {
                         openSet.Add (neighbor);
                     }
@@ -76,6 +76,14 @@ public class planner1 : MonoBehaviour {
         }
         return current;
     }
+
+    public float costUqil(int id, int goal){
+        Node startNode = mapGraph.getNode(id);
+        Node goalNode = mapGraph.getNode(goal);
+        Vector3 startPos = startNode.getPosition();
+        Vector3 goalPos = goalNode.getPosition();
+        return Vector3.Distance (startPos, goalPos);
+    } 
 
     public float cost (int id, int goal) {
         Node startNode = mapGraph.getNode(id);
@@ -108,6 +116,34 @@ public class planner1 : MonoBehaviour {
                 }
             }else{
                 if(0==goalNode.getJ()%2){
+                    DirCost = 100000;
+                }else{
+                    DirCost = 0;
+                }
+            }
+        }else if((startNode.getJ()+startNode.getI())!=(goalNode.getJ()+goalNode.getI())){
+            if(dirVec.x>0 && dirVec.z>0){
+                if(0==(goalNode.getJ()+goalNode.getI())%2){
+                    DirCost = 0;
+                }else{
+                    DirCost = 100000;
+                }
+            }else if(dirVec.x<0 && dirVec.z<0){
+                if(0==(goalNode.getJ()+goalNode.getI())%2){
+                    DirCost = 100000;
+                }else{
+                    DirCost = 0;
+                }
+            }
+        }else if((startNode.getJ()+startNode.getI())==(goalNode.getJ()+goalNode.getI())){
+            if(dirVec.x<0 && dirVec.z>0){
+                if(0==(goalNode.getJ()+goalNode.getI())%2){
+                    DirCost = 0;
+                }else{
+                    DirCost = 100000;
+                }
+            }else if(dirVec.x>0 && dirVec.z<0){
+                if(0==(goalNode.getJ()+goalNode.getI())%2){
                     DirCost = 100000;
                 }else{
                     DirCost = 0;

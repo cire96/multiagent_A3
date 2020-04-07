@@ -28,10 +28,18 @@ namespace UnityStandardAssets.Vehicles.Car
         public Graph mapGraph;
 
         int backingCounter;
+        float capSpeed=10f;
+
         public int Aggressiveness;
         public Color my_color;
 
         public GameObject carHit;
+        bool starting = true;
+        public int temp = 0;
+        public float newSpeed;
+        public float newSteer;
+        public float handBrake;
+
 
 
 
@@ -57,22 +65,25 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
             behaviorTree = new Root(
-                new BlackboardCondition("NotOnGoal", Operator.IS_EQUAL, true, Stops.SELF,
-                    new Selector(
-                        new BlackboardCondition("Wall",Operator.IS_EQUAL, true ,Stops.SELF,
-                            new Action(()=>rePlan())
-                        ), 
-            
-                        new BlackboardCondition("Car",Operator.IS_EQUAL,true,Stops.SELF,
-                            new Sequence(
-                                new Action(()=>calculateBearing()),
-                                new Action(()=>Avoid())
-                            )
-                        ),
-                    
-                        new Action(()=>followPath())
+                new Selector(
+                    new BlackboardCondition("NotOnGoal", Operator.IS_EQUAL, true, Stops.SELF,
+                        new Selector(
+                            new BlackboardCondition("Wall",Operator.IS_EQUAL, true ,Stops.SELF,
+                                new Action(()=>rePlan())
+                            ), 
+                
+                            new BlackboardCondition("Car",Operator.IS_EQUAL,true,Stops.SELF,
+                                new Sequence(
+                                    new Action(()=>calculateBearing()),
+                                    new Action(()=>Avoid())
+                                )
+                            ),
+                        
+                            new Action(()=>followPath())
 
-                    )//fix action to adjust closer to goal
+                        )//fix action to adjust closer to goal
+                    ),
+                    new Action(()=>goalAdjust())
                 )
 
             );
@@ -83,7 +94,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Debugger debugger = (Debugger)this.gameObject.AddComponent(typeof(Debugger));
             debugger.BehaviorTree = behaviorTree;
 #endif
-
+            
             behaviorTree.Start();
             
 
@@ -95,27 +106,110 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void calculateBearing(){
+            temp++;
             CarAI otherCarAI=carHit.GetComponent<CarAI>(); 
-            if(Aggressiveness>otherCarAI.Aggressiveness){
-
-            }else{
+            float ourDis=Vector3.Distance(transform.position,goal_pos);
+            float otherDis = Vector3.Distance(carHit.transform.position,otherCarAI.goal_pos);
+            if(ourDis>otherDis){//Aggressiveness<otherCarAI.Aggressiveness){
                 Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
-                if(transform.InverseTransformPoint(vel).z>0.1){
+                if(transform.InverseTransformDirection(vel).z>0.01){
                     m_Car.Move(0, -1, -1, 0);
-                }else if(transform.InverseTransformPoint(vel).z<-0.1){
+                }else if(transform.InverseTransformDirection(vel).z<-0.01){
                     m_Car.Move(0, 1, 1, 0);
                 }else{m_Car.Move(0, 0, 0, 0);}  
+            }else{
+                LayerMask mask = LayerMask.GetMask("Car");
+                Vector3 steeringPointLeft = (transform.rotation * new Vector3(-1,0,1));
+                Vector3 steeringPointRight = (transform.rotation * new Vector3(1,0,1));
+                Vector3 steeringPointBack = (transform.rotation * new Vector3(0,0,-1));
+                RaycastHit rayHit;
+                bool hitLeft = Physics.SphereCast(transform.position,2.0f,steeringPointLeft,out rayHit,6.0f, mask);
+                bool hitRight = Physics.SphereCast(transform.position,2.0f,steeringPointRight,out rayHit,6.0f, mask);
+                bool hitBack = Physics.SphereCast(transform.position,2.0f,steeringPointBack,out rayHit,6.0f, mask);
+                Debug.DrawRay(transform.position, steeringPointLeft * 6.0f, Color.yellow);
+                Debug.DrawRay(transform.position, steeringPointRight * 6.0f, Color.yellow);
+                Debug.DrawRay(transform.position, steeringPointBack * 6.0f, Color.yellow);
+
+                Vector3 target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
+                Vector3 carToTarget = m_Car.transform.InverseTransformPoint(target);
+                float infrontOrbehind = (carToTarget.z / carToTarget.magnitude);
+                float leftorRight = (carToTarget.x / carToTarget.magnitude);
+                
+                if(infrontOrbehind>0){
+                    if(leftorRight>0){//right
+                        if(!hitRight){
+                            m_Car.Move(1, 1, 1, 0);
+                        }
+                        else if(!hitBack){
+                            m_Car.Move(0, -1, -1, 0);
+                        }
+
+                    }else{
+                        if(!hitLeft){
+                            m_Car.Move(-1, 1, 1, 0);
+                        }
+                        else if(!hitBack){
+                            m_Car.Move(0, -1, -1, 0);
+                        }
+
+                    }
+                }else{
+                    if(leftorRight>0){
+                        if(!hitBack){
+                            m_Car.Move(0, -1, -1, 0);
+                        }
+                        else if(!hitLeft){
+                            m_Car.Move(-1, -1, -1, 0);
+                        }
+
+                    }else{
+                        if(!hitBack){
+                            m_Car.Move(0, -1, -1, 0);
+                        }
+                        else if(!hitRight){
+                            m_Car.Move(1, -1, -1, 0);
+                        }
+                    }
+                    
+                }
+                
+
+
             }
 
             
         }
 
         void Avoid(){
-            Debug.Log("Avoid");
+            //Debug.Log("Avoid");
+        }
+
+        void goalAdjust(){
+            Vector3 target = goal_pos;
+            Vector3 carToTarget = m_Car.transform.InverseTransformPoint(target);
+            float newSteer = (carToTarget.x / carToTarget.magnitude);
+            float newSpeed; 
+            float handBrake = 0f;
+            float infrontOrbehind = (carToTarget.z / carToTarget.magnitude);
+            if (infrontOrbehind < 0) {
+                newSpeed = -1;
+                if (newSteer < 0) {
+                    newSteer = 1;
+                } else {
+                    newSteer = -1;
+                }
+            } else { newSpeed = 1f; }
+            //print("Target now goal");
+            Debug.DrawLine(transform.position,target,Color.black);
+            m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
+
         }
 
         void followPath(){
-            //Debug.Log("followPath");
+            
+            RaycastHit rayHit;
+            LayerMask wallMask = LayerMask.GetMask("Wall");
+            LayerMask carMask = LayerMask.GetMask("Car");
             Vector3 target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
 
             if(6f>Vector3.Distance(transform.position,target) && targetIndex<ownPath.Count-1){
@@ -123,15 +217,33 @@ namespace UnityStandardAssets.Vehicles.Car
                 target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
             }
 
+            float minDis = 10000;
+            int minIndex = targetIndex;
+            for(int i=targetIndex;i<ownPath.Count;i++){
+                Vector3 minTarget=mapGraph.getNode(ownPath[i]).getPosition();
+                float tempDistance = Vector3.Distance(transform.position,minTarget);
+                bool tempHit = Physics.SphereCast(transform.position,2.3f,minTarget-transform.position,out rayHit,tempDistance, wallMask);
+                if(minDis>tempDistance && !tempHit){
+                    minDis = tempDistance;
+                    minIndex = i;
+                }
+                targetIndex = minIndex;
+            }
+            target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
             Vector3 carToTarget = m_Car.transform.InverseTransformPoint(target);
-            float newSteer = (carToTarget.x / carToTarget.magnitude);
-            float newSpeed; 
-            float handBrake = 0f;
+            newSteer = (carToTarget.x / carToTarget.magnitude);
+             
+            handBrake = 0f;
+
 
             if(backingCounter>0){
                 backingCounter--;
                 newSteer = -1f*newSteer;
                 newSpeed = -1;
+                if(capSpeed<m_Car.CurrentSpeed){
+                    newSpeed=0;
+                }
+                print("backing");
                 m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
                 return;
             }
@@ -150,17 +262,15 @@ namespace UnityStandardAssets.Vehicles.Car
             
 
 
-            LayerMask wallMask = LayerMask.GetMask("Wall");
-            LayerMask carMask = LayerMask.GetMask("Car");
+            
 
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
-            RaycastHit rayHit;
             bool hit = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,6.0f, wallMask);
             bool hitTurn = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,12.0f, wallMask);
             bool hitCar = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,6.0f, carMask);
-            if(hitCar){
+            /*if(hitCar){
                 newSpeed = -1;
-            }
+            }*/
             if(hit){
                 backingCounter = 5;
             }else if(hitTurn){
@@ -169,12 +279,13 @@ namespace UnityStandardAssets.Vehicles.Car
 
             
 
-            if(10<m_Car.CurrentSpeed){
+            if(capSpeed<m_Car.CurrentSpeed){
                 newSpeed=0;
             }
 
-            Debug.DrawLine(transform.position,target,Color.magenta);
+            Debug.DrawLine(transform.position,target,Color.black);
             m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
+
 
 
 
@@ -187,10 +298,13 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
         private void FixedUpdate(){
+            if(starting){
+                blackboard["NotOnGoal"]=true;
+                blackboard["Wall"]=false;
+                blackboard["Car"]=false;
+                starting=false;
+            }
 
-            blackboard["NotOnGoal"]=true;
-            blackboard["Wall"]=false;
-            blackboard["Car"]=false;
 
             if(10>Vector3.Distance(transform.position,goal_pos)){
                 blackboard["NotOnGoal"]=false;
@@ -198,12 +312,11 @@ namespace UnityStandardAssets.Vehicles.Car
             LayerMask mask = LayerMask.GetMask("Car");
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             RaycastHit rayHit;
-            bool hit = Physics.Raycast(transform.position,steeringPoint-transform.position,out rayHit,20.0f, mask);
+            bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,20.0f, mask);
             if(hit){
                 Debug.DrawRay(transform.position, steeringPoint * rayHit.distance, Color.yellow);
                 carHit = rayHit.collider.transform.root.gameObject;
                 blackboard["Car"]=true;
-                Debug.Log("Hit car");
             }else{
                 Debug.DrawRay(transform.position, steeringPoint * 20.0f, Color.yellow);
                 blackboard["Car"]=false;

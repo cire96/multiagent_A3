@@ -6092,9 +6092,13 @@ MonoBehaviour:
   ownPath: 
   targetIndex: 0
   planner: {fileID: 0}
-  Aggressivness: 0
+  Aggressiveness: 0
   my_color: {r: 0, g: 0, b: 0, a: 0}
   carHit: {fileID: 0}
+  temp: 0
+  newSpeed: 0
+  newSteer: 0
+  handBrake: 0
 --- !u!1 &5781826396937079012
 GameObject:
   m_ObjectHideFlags: 0
