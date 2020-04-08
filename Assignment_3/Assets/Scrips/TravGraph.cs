@@ -28,7 +28,7 @@ public class TravGraph : MonoBehaviour {
         float tileXSize = (terrainInfo.x_high - terrainInfo.x_low) / terrainInfo.x_N;
         float tileZSize = (terrainInfo.z_high - terrainInfo.z_low) / terrainInfo.z_N;
 
-        float factor = 4f;
+        float factor = 3.5f;
         float[, ] newTerrain = new float[(int) Mathf.Floor (tileXSize * tileXSize / factor), (int) Mathf.Floor (tileZSize * tileZSize / factor)];
         stepx = (terrainInfo.x_high - terrainInfo.x_low) / newTerrain.GetLength (0);
         stepz = (terrainInfo.z_high - terrainInfo.z_low) / newTerrain.GetLength (1);
@@ -87,7 +87,7 @@ public class TravGraph : MonoBehaviour {
                     
                     Vector3 from = mapGraph.getNode(nodeId).getPosition();
                     
-                    
+                     
                     if(nodeIdMatrix[i-1,j-1] != -1 && !Physics.Raycast(from , mapGraph.getNode(nodeIdMatrix[i-1,j-1]).getPosition()-from, out hit,Vector3.Distance(mapGraph.getNode(nodeIdMatrix[i-1,j-1]).getPosition(),from) , mask)){
                         Debug.DrawLine(from,mapGraph.getNode(nodeIdMatrix[i-1,j-1]).getPosition(),Color.cyan,timeDraw);
                         mapGraph.addEdge(nodeId,nodeIdMatrix[i-1,j-1]);}
