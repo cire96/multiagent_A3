@@ -118,10 +118,10 @@ namespace UnityStandardAssets.Vehicles.Car
                 temp++;
                 Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
                 if(transform.InverseTransformDirection(vel).z>0.01){
-                    m_Car.Move(0, -1, -1, 0);
+                    m_Car.Move(0, -1, -1, 1);
                 }else if(transform.InverseTransformDirection(vel).z<-0.01){
-                    m_Car.Move(0, 1, 1, 0);
-                }else{m_Car.Move(0, 0, 0, 0);}  
+                    m_Car.Move(0, 1, 1, 1);
+                }else{m_Car.Move(0, 0, 0, 1);}  
             }else{
                 followPath();
             }
@@ -261,7 +261,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 idelFrames++;
                 if(idelFrames>30){
                     idelFrames=0;
-                    backingCounter=7;
+                    backingCounter=10;
                 }
             }
             

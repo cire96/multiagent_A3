@@ -6024,6 +6024,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96468c245ae8e0d4f8f1c7a7b8b0542e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  h: 0
+  v: 0
+  handbrake: 0
 --- !u!114 &5781826396943105392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6091,6 +6094,7 @@ MonoBehaviour:
   goal_pos: {x: 0, y: 0, z: 0}
   ownPath: 
   targetIndex: 0
+  avoidRange: 10
   planner: {fileID: 0}
   Aggressiveness: 0
   my_color: {r: 0, g: 0, b: 0, a: 0}
@@ -6101,6 +6105,7 @@ MonoBehaviour:
   handBrake: 0
   delay: 0
   ourDis: 0
+  idelFrames: 0
 --- !u!1 &5781826396937079012
 GameObject:
   m_ObjectHideFlags: 0
