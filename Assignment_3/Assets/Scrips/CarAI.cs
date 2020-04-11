@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using static System.Math; 
 using NPBehave;
+
 
 
 namespace UnityStandardAssets.Vehicles.Car
@@ -316,6 +317,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 //LayerMask.NameToLayer("Finished")
 
             }
+            avoidRange = m_Car.CurrentSpeed;
             LayerMask mask = LayerMask.GetMask("Car");
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             Vector3 steeringPointLeft = (transform.rotation * new Vector3(-1,0,1));

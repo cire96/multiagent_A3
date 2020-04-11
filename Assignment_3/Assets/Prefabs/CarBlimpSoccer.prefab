@@ -1304,11 +1304,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4546959594134506395}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96468c245ae8e0d4f8f1c7a7b8b0542e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  h: 0
+  v: 0
+  handbrake: 0
+  speed: 0
 --- !u!114 &4546959594141613577
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1377,7 +1381,12 @@ MonoBehaviour:
   enemy_tag: 
   own_goal: {fileID: 0}
   other_goal: {fileID: 0}
+  own_goalNormal: {x: 0, y: 0, z: 0}
   ball: {fileID: 0}
+  Shooter: 0
+  newSpeed: 0
+  newSteer: 0
+  handBrake: 0
 --- !u!114 &4546959594134506398
 MonoBehaviour:
   m_ObjectHideFlags: 0

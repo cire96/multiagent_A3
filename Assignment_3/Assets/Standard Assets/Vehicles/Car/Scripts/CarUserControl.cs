@@ -11,6 +11,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public float h; 
         public float v;
         public float handbrake; 
+        public float speed;
 
         private void Awake()
         {
@@ -21,6 +22,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
+            speed=m_Car.CurrentSpeed;
             // pass the input to the car!
             h = CrossPlatformInputManager.GetAxis("Horizontal");
             v = CrossPlatformInputManager.GetAxis("Vertical");
