@@ -255,20 +255,24 @@ namespace UnityStandardAssets.Vehicles.Car
             if(TargetToCar.x*own_goalNormal.x>0){
                 Vector3 v=new Vector3(-Mathf.Sign(own_goalNormal.x),0,Mathf.Sign(TargetToCar.z)).normalized; 
                 dynamicTarget = v*1.5f*disToTarget+target;
+                dynamicTarget=CapVtoField(transform.position,dynamicTarget, target);
                 Drive(dynamicTarget,capSpeedFirst);
                 //Gizmos.DrawCube(dynamicTarget, new Vector3(1, 1, 1));
                 
             }else{
+                
                 dynamicTarget=GoalToTarget*disToTarget*(0.1f*Mathf.Abs(target.z-transform.position.z))*0.35f+target;
+                dynamicTarget=CapVtoField(transform.position,dynamicTarget, target);
                 if(30>Vector3.Angle(transform.rotation*new Vector3(0,0,1),own_goalNormal) && 8>disToTarget){
                     Braking(0f);
                     return;
                 }
                 //Gizmos.DrawCube(dynamicTarget, new Vector3(1, 1, 1));
+
                 Drive(dynamicTarget,capSpeedSecond);
                 
             }
-            //dynamicTarget=CapVtoField(target,dynamicTarget);
+            
             
             
             gizTarget=dynamicTarget;
@@ -339,13 +343,23 @@ namespace UnityStandardAssets.Vehicles.Car
 
         }
 
-        Vector3 CapVtoField(Vector3 Start,Vector3 V){
+        Vector3 CapVtoField(Vector3 Start,Vector3 V, Vector3 target){
+            // start is the car, V is the position of the dynamic target. target is the "static" target, like the ball, or the position to realign to.
             RaycastHit rayHit;
             LayerMask wallMask = LayerMask.GetMask("Wall");
-            bool hit = Physics.Raycast(Start,V-Start,out rayHit,(V-Start).magnitude, wallMask);
+            bool hit = Physics.SphereCast(Start, 0.1f, V-Start,out rayHit,(V-Start).magnitude, wallMask); // Raycast from the car to the dynamic target. If there is a wall in the way, we should choose 
             if(hit){
-                V=V.normalized;
-                V=V*rayHit.distance;
+                
+                //V = rayHit.point; // Puts V to be the position of the raycast hit on the wall, from the car to the dynamic target.
+
+                
+                hit = Physics.SphereCast(target, 0.1f, V-target,out rayHit,(V-target).magnitude, wallMask);
+
+                if(hit){
+                    V = rayHit.point;
+                }
+                
+
             }
             return V;
         }
