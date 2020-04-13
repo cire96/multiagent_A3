@@ -19,6 +19,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
         public GameObject terrain_manager_game_object;
         TerrainManager terrain_manager;
+        WhoBall who_ball;
+        GoalCheck goal_check;
 
         public GameObject[] friends;
         public string friend_tag;
@@ -36,6 +38,12 @@ namespace UnityStandardAssets.Vehicles.Car
         bool starting = true;
         GameObject activeShooter;
         GameObject Goalie;
+        int oldScore=0;
+
+        //Def
+        GameObject defTarget;
+        bool startDef = false;
+        string oldBallTag="";
 
         //Driving
         public int backingCounter=0;
@@ -51,8 +59,12 @@ namespace UnityStandardAssets.Vehicles.Car
         private void Start()
         {
             // get the car controller
+            ball = GameObject.FindGameObjectWithTag("Ball");
             m_Car = GetComponent<CarController>();
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
+            who_ball = ball.GetComponent<WhoBall>();
+            goal_check = ball.GetComponent<GoalCheck>();
+
 
 
             // note that both arrays will have holes when objects are destroyed
@@ -69,7 +81,7 @@ namespace UnityStandardAssets.Vehicles.Car
             friends = GameObject.FindGameObjectsWithTag(friend_tag);
             enemies = GameObject.FindGameObjectsWithTag(enemy_tag);
 
-            ball = GameObject.FindGameObjectWithTag("Ball");
+
 
             behaviorTree = new Root(
                 new Selector(
@@ -121,7 +133,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         //Def
         public bool CheckDefPos(){
-            if(own_goal.transform.position.z < transform.position.z && transform.position.z < ball.transform.position.z){
+            if(own_goal.transform.position.x < transform.position.x && transform.position.x < ball.transform.position.x){
                 return true;
             }
             return false;
@@ -132,14 +144,49 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void InterceptBall(){
+            if(Goalie!=gameObject){
+                Drive(ball.transform.position,-1);
+            }else{
+                if(45f>Vector3.Distance(own_goal.transform.position,ball.transform.position)){
+                    Drive(ball.transform.position,-1);
+                }else{
+                    SupportRealign();
+                }
+            }
 
+            
         }
-
         void BearingCar(){
+            if(startDef){
+                GameObject targetMin = ball;
+                float tempMin=1000;
 
+                List<GameObject> listEnemies=new List<GameObject>();
+                foreach (GameObject enemy in enemies) listEnemies.Add(enemy);
+
+                foreach(GameObject friend in friends){
+                    listEnemies.Remove(friend.GetComponent<CarAISoccer_gr1>().defTarget);
+                }
+                
+                foreach(GameObject enemy in listEnemies){
+                    if(other_goal.transform.position.x > enemy.transform.position.x &&  enemy.transform.position.x > ball.transform.position.x){
+                        if(tempMin>Vector3.Distance(enemy.transform.position,ball.transform.position)){
+                            tempMin = Vector3.Distance(enemy.transform.position,ball.transform.position);
+                            targetMin=enemy;
+                        }
+                    }
+                }
+                defTarget=targetMin;
+                startDef=false;
+            }
         }
 
         void InterceptEnemy(){
+            if(defTarget==ball){
+                Align(defTarget.transform.position,-1,-1);
+            }else{
+                Drive(defTarget.transform.position,-1);
+            }
 
         }
 
@@ -277,8 +324,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,6.0f, wallMask);
-            bool hitCar = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,3.0f, carMask);
-            if(hit){
+            bool hitCar = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,6.0f, carMask);
+            if(hit || hitCar){
                 backingCounter = 7;
             }
 
@@ -323,6 +370,20 @@ namespace UnityStandardAssets.Vehicles.Car
                 starting=false;
                 behaviorTree.Start();
             
+            }
+            if(oldScore<goal_check.red_score+goal_check.blue_score){
+                oldScore=goal_check.red_score+goal_check.blue_score;
+                blackboard["OtherTeamAttack"]=false;
+            }
+
+            if(who_ball.WhoTag==enemy_tag && who_ball.WhoTag!=oldBallTag){
+                startDef=true;
+                oldBallTag=who_ball.WhoTag;
+                blackboard["OtherTeamAttack"]=true;
+            }else if(who_ball.WhoTag==friend_tag && who_ball.WhoTag!=oldBallTag){
+                startDef=false;
+                oldBallTag=who_ball.WhoTag;
+                blackboard["OtherTeamAttack"]=false;
             }
 
             float tempMin=1000;

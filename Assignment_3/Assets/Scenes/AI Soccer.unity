@@ -248,6 +248,20 @@ MonoBehaviour:
   ball_spawn_point: {fileID: 355222091}
   blue_score: 0
   red_score: 0
+  goal: 0
+--- !u!114 &248749936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 248749929}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f01a870a4f46401abd68cd86c78711a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WhoTag: 
 --- !u!1 &283833300
 GameObject:
   m_ObjectHideFlags: 0

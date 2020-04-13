@@ -100,11 +100,11 @@ namespace UnityStandardAssets.Vehicles.Car
             float grid_center_x = terrain_manager.myInfo.get_x_pos(i);
             float grid_center_z = terrain_manager.myInfo.get_z_pos(j);
 
-            Debug.DrawLine(transform.position, ball.transform.position, Color.black);
+            /*Debug.DrawLine(transform.position, ball.transform.position, Color.black);
             Debug.DrawLine(transform.position, own_goal.transform.position, Color.green);
             Debug.DrawLine(transform.position, other_goal.transform.position, Color.yellow);
             Debug.DrawLine(transform.position, friends[0].transform.position, Color.cyan);
-            Debug.DrawLine(transform.position, enemies[0].transform.position, Color.magenta);
+            Debug.DrawLine(transform.position, enemies[0].transform.position, Color.magenta);*/
 
 
 

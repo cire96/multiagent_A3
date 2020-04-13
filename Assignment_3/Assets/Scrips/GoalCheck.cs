@@ -7,6 +7,7 @@ public class GoalCheck : MonoBehaviour
     public GameObject ball_spawn_point;
     public int blue_score = 0;
     public int red_score = 0;
+    public bool goal = false;
 
 
     // Start is called before the first frame update
@@ -29,6 +30,7 @@ public class GoalCheck : MonoBehaviour
             transform.position = ball_spawn_point.transform.position;
             GetComponent<Rigidbody>().velocity = Vector3.zero;
             red_score = red_score + 1;
+            goal=true;
 
         }
         if (collision.gameObject.name == "Red_goal")
@@ -37,6 +39,7 @@ public class GoalCheck : MonoBehaviour
             transform.position = ball_spawn_point.transform.position;
             GetComponent<Rigidbody>().velocity = Vector3.zero;
             blue_score = blue_score + 1;
+            goal=true;
         }
     }
 }
