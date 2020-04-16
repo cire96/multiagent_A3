@@ -71,7 +71,7 @@ public class GameManager : MonoBehaviour {
             new_AI.my_goal_object = goal_sphere;
             new_AI.terrain_manager_game_object = terrain_manager_game_object;
             new_AI.Aggressiveness = no_of_cars-i;
-            new_AI.delay = 5*no_of_cars*((int)(i)); // Random.Range(0, no_of_cars*no_of_cars)*
+            new_AI.delay = 3*no_of_cars*((int)(i)); // Random.Range(0, no_of_cars*no_of_cars)*
             new_AI.my_color=my_color;
 
             new_AI.ownPath = planner.plan(new_car.transform.position,goal_sphere.transform.position,my_color);

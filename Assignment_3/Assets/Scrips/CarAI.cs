@@ -33,6 +33,7 @@ namespace UnityStandardAssets.Vehicles.Car
         float capSpeed=20f;
 
         public int Aggressiveness;
+        public int oldAggressiveness;
         public Color my_color;
 
         public GameObject carHit;
@@ -44,6 +45,12 @@ namespace UnityStandardAssets.Vehicles.Car
         public int delay;
         public float ourDis;
         public int idelFrames; 
+        public bool colliding = false;
+        int collidingTime = 0;
+        public int waitTimer = 0;
+
+
+
 
 
 
@@ -67,8 +74,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
             friends = GameObject.FindGameObjectsWithTag("Player");
-            
 
+            oldAggressiveness = Aggressiveness;
 
             behaviorTree = new Root(
                 new Selector(
@@ -117,6 +124,7 @@ namespace UnityStandardAssets.Vehicles.Car
             float otherDis = otherCarAI.ownPath.Count-otherCarAI.targetIndex;//-(0.1f*otherCarAI.temp);//Vector3.Distance(carHit.transform.position,otherCarAI.goal_pos);
             if(Aggressiveness<otherCarAI.Aggressiveness){   //ourDis>otherDis
                 temp++;
+                waitTimer = 50;
                 Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
                 if(transform.InverseTransformDirection(vel).z>0.01){
                     newSpeed=-1;
@@ -129,7 +137,11 @@ namespace UnityStandardAssets.Vehicles.Car
                     handBrake=1;
                 }  
                 m_Car.Move(0, newSpeed, newSpeed, handBrake);
-            }else{
+
+            
+            }
+            
+            else{
                 followPath();
             }
 
@@ -172,6 +184,7 @@ namespace UnityStandardAssets.Vehicles.Car
             LayerMask wallMask = LayerMask.GetMask("Wall");
             LayerMask finishMask = LayerMask.GetMask("Finished");
             LayerMask carMask = LayerMask.GetMask("Car");
+            LayerMask bothMask = LayerMask.GetMask("Wall", "Car");
             Vector3 target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
 
             if(6f>Vector3.Distance(transform.position,target) && targetIndex<ownPath.Count-1){
@@ -205,7 +218,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
             if(backingCounter>0){
                 backingCounter--;
-                if(0.3>transform.InverseTransformDirection(vel).z){
+                if(0.3f>transform.InverseTransformDirection(vel).z){
                     newSteer = -1f*Mathf.Sign(newSteer);
                 }
                 
@@ -239,7 +252,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             Vector3 steeringPointLeft = (transform.rotation * new Vector3(-1,0,1));
             bool hit = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,3.0f, wallMask);
-            bool hitTurn = Physics.SphereCast(transform.position,5.0f,steeringPoint,out rayHit,10.0f, wallMask);
+            bool hitTurn = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,10.0f, wallMask);
             bool hitFinished = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,6.0f, finishMask);
             bool hitCar = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,3.0f, carMask);
             bool hitCarLeft = Physics.Raycast(transform.position,transform.TransformDirection(Vector3.forward+new Vector3(-1,0,0)),out rayHit,6.0f, carMask);
@@ -254,10 +267,14 @@ namespace UnityStandardAssets.Vehicles.Car
         
             if(hit){
                 backingCounter = 20;
-            }else if(hitTurn){
-                if(newSteer>0.3){newSteer = Mathf.Sign(newSteer);}
-                
             }
+            /*
+            else if(hitTurn){
+                newSteer = Mathf.Sign(newSteer);    
+            }*/
+            if(Mathf.Abs(newSteer) > 0.3f){
+                newSteer = Mathf.Sign(newSteer);
+            }  
             
             if(ownPath.Count>targetIndex+lookAhead && 0<targetIndex-lookBack){
                 for(int i=targetIndex-lookBack;i<targetIndex+lookAhead-2;i++){
@@ -290,7 +307,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 idelFrames++;
                 if(idelFrames>30){
                     idelFrames=0;
-                    backingCounter=10;
+                    backingCounter=100;
                 }
             }
             
@@ -332,7 +349,34 @@ namespace UnityStandardAssets.Vehicles.Car
                 behaviorTree.Start();
             }
 
-            
+            if(colliding){
+                collidingTime = 0;
+            }
+
+            else{
+                collidingTime++;
+            }
+
+            if(collidingTime > 100){
+                Aggressiveness = oldAggressiveness;
+            }
+
+            if(waitTimer > 0){
+                Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
+                if(transform.InverseTransformDirection(vel).z>0.01){
+                    newSpeed=-1;
+                    handBrake=1;
+                }else if(transform.InverseTransformDirection(vel).z<-0.01){
+                    newSpeed=1;
+                    handBrake=1;
+                }else{
+                    newSpeed=0;
+                    handBrake=1;
+                }
+                waitTimer --;
+                m_Car.Move(0, newSpeed, newSpeed, handBrake);
+
+            }
 
             if(10>Vector3.Distance(transform.position,goal_pos)){
                 blackboard["NotOnGoal"]=false;
@@ -354,9 +398,12 @@ namespace UnityStandardAssets.Vehicles.Car
             bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,avoidRange, mask);
             bool hitLeft = Physics.SphereCast(transform.position,2.0f,steeringPointLeft,out rayHitLeft,avoidRange, mask);
             bool hitRight = Physics.SphereCast(transform.position,2.0f,steeringPointRight,out rayHitRight,avoidRange, mask);
-            if(hit ){
+            if(hit){
                 Debug.DrawRay(transform.position, steeringPoint * rayHit.distance, Color.yellow);
                 carHit = rayHit.collider.transform.root.gameObject;
+                if(carHit.GetComponent<CarAI>().delay > 0){
+                    newSteer = Mathf.Sign(newSteer);
+                }
                 blackboard["Car"]=true;
             }else if(hitLeft){
                 Debug.DrawRay(transform.position, steeringPointLeft * rayHit.distance, Color.yellow);
@@ -388,21 +435,38 @@ namespace UnityStandardAssets.Vehicles.Car
                 if(hit){
                     carHit = rayHit.collider.transform.root.gameObject;
 
-                    if(collision.gameObject == carHit){ // The right game object?
+                    if(collision.gameObject == carHit){ // If the car can see the other car it is colliding with in front (i.e., it is the car running into the other car, and not the car being run into.)
 
-                        int colliderAggresivnes=collision.gameObject.GetComponent<CarAI>().Aggressiveness;
-                        if( Aggressiveness>1 && colliderAggresivnes<=Aggressiveness && newSpeed>0){
+                        int colliderAggressiveness=collision.gameObject.GetComponent<CarAI>().Aggressiveness; // Extract the aggressiveness of the car being hit.
+                        if( Aggressiveness>1 && colliderAggressiveness<=Aggressiveness && newSpeed>0){ // If the aggressiveness of the car being hit is larger than 1, and the aggressiveness of the other car is smaller than this car. Only if car is actively going forward into the other car.
                             Aggressiveness--;
                         }
-                        else if(colliderAggresivnes>Aggressiveness){
+                        /*
+                        else if(colliderAggressiveness>Aggressiveness){
                             Aggressiveness++;
                             }
+                        */
                         }
+                        
 
                     }
                 }
 
                 
         }
+
+        private void OnCollisionEnter(Collision collision){
+            if(collision.gameObject.tag == "Player"){
+                colliding = true;
+            }
+            
+        }
+
+        private void OnCollisionExit(Collision collision){
+            if(collision.gameObject.tag == "Player"){
+                colliding = false;
+            }
+        }
+
     }
 }
