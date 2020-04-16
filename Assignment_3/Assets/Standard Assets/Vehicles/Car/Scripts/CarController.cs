@@ -234,6 +234,9 @@ namespace UnityStandardAssets.Vehicles.Car
                     m_WheelColliders[i].brakeTorque = 0f;
                     m_WheelColliders[i].motorTorque = -m_ReverseTorque*footbrake;
                 }
+                else if(footbrake==0){
+                    m_WheelColliders[i].brakeTorque = 0f;
+                }
             }
         }
 

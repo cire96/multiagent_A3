@@ -94,7 +94,7 @@ public class planner1 : MonoBehaviour {
         Vector3 dirVec = (goalPos - startPos);
         dirVec.Normalize();
         if(startNode.getI()==goalNode.getI()){
-            if(dirVec.z>0){
+            if(dirVec.z>0 ){
                 if(0==goalNode.getI()%2){
                     DirCost = 0;
                 }else{
@@ -153,7 +153,7 @@ public class planner1 : MonoBehaviour {
 
 
 
-        return Vector3.Distance (startPos, goalPos) + DirCost;
+        return Vector3.Distance (startPos, goalPos) + DirCost + goalNode.getCost();
     }
 
     public List<int> reconstruct_path (Dictionary<int, int> cameFrom, int current) {
@@ -163,6 +163,8 @@ public class planner1 : MonoBehaviour {
         }
         List<int> total_path = new List<int> () { current };
         while (cameFrom.ContainsKey (current)) {
+            Node currentNode=mapGraph.getNode(current);
+            currentNode.setCost(currentNode.getCost()+0f);
             current = cameFrom[current];
             total_path.Insert (0, current);
         }

@@ -28,7 +28,7 @@ public class TravGraph : MonoBehaviour {
         float tileXSize = (terrainInfo.x_high - terrainInfo.x_low) / terrainInfo.x_N;
         float tileZSize = (terrainInfo.z_high - terrainInfo.z_low) / terrainInfo.z_N;
 
-        float factor = 3.5f;
+        float factor = 4.5f;
         float[, ] newTerrain = new float[(int) Mathf.Floor (tileXSize * tileXSize / factor), (int) Mathf.Floor (tileZSize * tileZSize / factor)];
         stepx = (terrainInfo.x_high - terrainInfo.x_low) / newTerrain.GetLength (0);
         stepz = (terrainInfo.z_high - terrainInfo.z_low) / newTerrain.GetLength (1);
@@ -47,11 +47,12 @@ public class TravGraph : MonoBehaviour {
         nodeIdMatrix = new int[xLen, zLen];
         mapGraph = new Graph();
         int nodeId;
+        float wallMargin = 2.0f;
         for (int i = 0; i < xLen; i++) {
             float posx = terrainInfo.x_low + stepx / 2 + stepx * i;
             for (int j = 0; j < zLen; j++) {
                 float posz = terrainInfo.z_low + stepz / 2 + stepz * j;
-                if (newTerrain[i,j]==0.0f && 0.0f==checkTrav(posx,posz+3.0f) && 0.0f==checkTrav(posx,posz-3.0f) && 0.0f==checkTrav(posx+3.0f,posz) && 0.0f==checkTrav(posx-3.0f,posz)){
+                if (newTerrain[i,j]==0.0f && 0.0f==checkTrav(posx,posz+wallMargin) && 0.0f==checkTrav(posx,posz-wallMargin) && 0.0f==checkTrav(posx+wallMargin,posz) && 0.0f==checkTrav(posx-wallMargin,posz)){
                     /*GameObject cube = GameObject.CreatePrimitive (PrimitiveType.Cube);
                     Collider c = cube.GetComponent<Collider> ();
                     c.enabled = false;
@@ -87,7 +88,7 @@ public class TravGraph : MonoBehaviour {
                     
                     Vector3 from = mapGraph.getNode(nodeId).getPosition();
                     
-                     
+                    /* 
                     if(nodeIdMatrix[i-1,j-1] != -1 && !Physics.Raycast(from , mapGraph.getNode(nodeIdMatrix[i-1,j-1]).getPosition()-from, out hit,Vector3.Distance(mapGraph.getNode(nodeIdMatrix[i-1,j-1]).getPosition(),from) , mask)){
                         Debug.DrawLine(from,mapGraph.getNode(nodeIdMatrix[i-1,j-1]).getPosition(),Color.cyan,timeDraw);
                         mapGraph.addEdge(nodeId,nodeIdMatrix[i-1,j-1]);}
@@ -105,7 +106,7 @@ public class TravGraph : MonoBehaviour {
                     
                     if(nodeIdMatrix[i+1,j+1] != -1 && !Physics.Raycast(from , mapGraph.getNode(nodeIdMatrix[i+1,j+1]).getPosition()-from, out hit,Vector3.Distance(mapGraph.getNode(nodeIdMatrix[i+1,j+1]).getPosition(),from) , mask)){
                         Debug.DrawLine(from,mapGraph.getNode(nodeIdMatrix[i+1,j+1]).getPosition(),Color.cyan,timeDraw);
-                        mapGraph.addEdge(nodeId,nodeIdMatrix[i+1,j+1]);}
+                        mapGraph.addEdge(nodeId,nodeIdMatrix[i+1,j+1]);}*/
                     
 
                 }

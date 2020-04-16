@@ -119,10 +119,16 @@ namespace UnityStandardAssets.Vehicles.Car
                 temp++;
                 Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
                 if(transform.InverseTransformDirection(vel).z>0.01){
-                    m_Car.Move(0, -1, -1, 1);
+                    newSpeed=-1;
+                    handBrake=1;
                 }else if(transform.InverseTransformDirection(vel).z<-0.01){
-                    m_Car.Move(0, 1, 1, 1);
-                }else{m_Car.Move(0, 0, 0, 1);}  
+                    newSpeed=1;
+                    handBrake=1;
+                }else{
+                    newSpeed=0;
+                    handBrake=1;
+                }  
+                m_Car.Move(0, newSpeed, newSpeed, handBrake);
             }else{
                 followPath();
             }
@@ -158,7 +164,10 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void followPath(){
+            int lookAhead = 4;
+            int lookBack = 3;
             temp=0;
+            Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
             RaycastHit rayHit;
             LayerMask wallMask = LayerMask.GetMask("Wall");
             LayerMask finishMask = LayerMask.GetMask("Finished");
@@ -166,8 +175,13 @@ namespace UnityStandardAssets.Vehicles.Car
             Vector3 target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
 
             if(6f>Vector3.Distance(transform.position,target) && targetIndex<ownPath.Count-1){
-                targetIndex++;
-                target = mapGraph.getNode(ownPath[targetIndex]).getPosition();
+                Vector3 tempTarget=mapGraph.getNode(ownPath[targetIndex+1]).getPosition();
+                float tempDistance = Vector3.Distance(transform.position,tempTarget);
+                bool tempHit = Physics.SphereCast(transform.position,2.0f,tempTarget-transform.position,out rayHit,tempDistance, wallMask);
+                if(!tempHit){
+                   targetIndex++;
+                    target = mapGraph.getNode(ownPath[targetIndex]).getPosition(); 
+                }
             }
 
             float minDis = 10000;
@@ -175,8 +189,8 @@ namespace UnityStandardAssets.Vehicles.Car
             for(int i=targetIndex;i<ownPath.Count;i++){
                 Vector3 minTarget=mapGraph.getNode(ownPath[i]).getPosition();
                 float tempDistance = Vector3.Distance(transform.position,minTarget);
-                bool tempHit = Physics.SphereCast(transform.position,2.3f,minTarget-transform.position,out rayHit,tempDistance, wallMask);
-                if(minDis>tempDistance && !tempHit){
+                bool tempHit = Physics.SphereCast(transform.position,2.0f,minTarget-transform.position,out rayHit,tempDistance, wallMask);
+                if(minDis<tempDistance && !tempHit){
                     minDis = tempDistance;
                     minIndex = i;
                 }
@@ -191,12 +205,17 @@ namespace UnityStandardAssets.Vehicles.Car
 
             if(backingCounter>0){
                 backingCounter--;
-                newSteer = -1f*newSteer;
+                if(0.3>transform.InverseTransformDirection(vel).z){
+                    newSteer = -1f*Mathf.Sign(newSteer);
+                }
+                
+                
+                
                 newSpeed = -1;
                 if(capSpeed<m_Car.CurrentSpeed){
                     newSpeed=0;
                 }
-                print("backing");
+                //print("backing");
                 m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
                 return;
             }
@@ -219,8 +238,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
             Vector3 steeringPointLeft = (transform.rotation * new Vector3(-1,0,1));
-            bool hit = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,6.0f, wallMask);
-            bool hitTurn = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,12.0f, wallMask);
+            bool hit = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,3.0f, wallMask);
+            bool hitTurn = Physics.SphereCast(transform.position,5.0f,steeringPoint,out rayHit,10.0f, wallMask);
             bool hitFinished = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,6.0f, finishMask);
             bool hitCar = Physics.SphereCast(transform.position,2.3f,steeringPoint,out rayHit,3.0f, carMask);
             bool hitCarLeft = Physics.Raycast(transform.position,transform.TransformDirection(Vector3.forward+new Vector3(-1,0,0)),out rayHit,6.0f, carMask);
@@ -232,25 +251,34 @@ namespace UnityStandardAssets.Vehicles.Car
                 //backingCounter = 2;
             }
 
-            if(false){
-                Debug.DrawRay(transform.position, steeringPointLeft * rayHit.distance, Color.yellow);
-                Vector3 vel = m_Car.GetComponent<Rigidbody>().velocity;
-                if(transform.InverseTransformDirection(vel).z>0.01){
-                    newSpeed=-1;
-                    newSteer=0;
-                }else if(transform.InverseTransformDirection(vel).z<-0.01){
-                    newSpeed=1;
-                    newSteer=0;
-                }else{
-                    newSpeed=0;
-                    newSteer=0;
-                }  
-            }
+        
             if(hit){
                 backingCounter = 5;
             }else if(hitTurn){
-                newSteer = newSteer*10;
+                if(newSteer>0.3){newSteer = Mathf.Sign(newSteer);}
+                
             }
+            
+            if(ownPath.Count>targetIndex+lookAhead && 0<targetIndex-lookBack){
+                for(int i=targetIndex-lookBack;i<targetIndex+lookAhead-2;i++){
+                Vector3 firstNode=mapGraph.getNode(ownPath[i]).getPosition();
+                Vector3 secondNode=mapGraph.getNode(ownPath[i+1]).getPosition();
+                Vector3 thirdNode=mapGraph.getNode(ownPath[i+2]).getPosition();
+                float curveAngle = Vector3.Angle(firstNode-secondNode,thirdNode-secondNode);
+                
+                if(1.0f<curveAngle && 179.0f>curveAngle){
+                    if(5<transform.InverseTransformDirection(vel).z){
+                        newSpeed=-1;
+                        handBrake=1;
+                    }
+                    break;
+                }
+
+                
+            }
+
+            }
+            
 
             
             
@@ -349,6 +377,17 @@ namespace UnityStandardAssets.Vehicles.Car
 
             
 
+        }
+
+        private void OnCollisionStay(Collision collision){//probably better with underCollison
+            if(collision.gameObject.tag == "Player"){
+                int colliderAggresivnes=collision.gameObject.GetComponent<CarAI>().Aggressiveness;
+                if( Aggressiveness>1 && colliderAggresivnes<Aggressiveness && newSpeed>0){
+                    Aggressiveness--;
+                }else if(colliderAggresivnes>Aggressiveness){
+                    Aggressiveness++;
+                }
+            }
         }
     }
 }

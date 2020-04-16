@@ -11,6 +11,7 @@ public class Node{
     private Node parent;
     private int color;
     private GameObject cube;
+    private float cost=0f;
 
     //Lane cost logic
     private int i;// from left to right is true
@@ -110,6 +111,16 @@ public class Node{
     public int getJ(){
         return j;
     }
+
+    public void setCost(float _cost){
+        cost=_cost;
+    }
+
+    public float getCost(){
+        return cost;
+    }
+
+
 
     
     

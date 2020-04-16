@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour {
         start_time = Time.time;
 
         my_cars = new List<GameObject>();
+        planner1 planner = GameObject.Find("GraphObj").GetComponent<planner1>();
 
         race_car.transform.position = terrain_manager.myInfo.start_pos + 2f * Vector3.up;
         race_car.transform.rotation = Quaternion.identity;
@@ -69,9 +70,11 @@ public class GameManager : MonoBehaviour {
             new_AI = new_car.GetComponent<UnityStandardAssets.Vehicles.Car.CarAI>();
             new_AI.my_goal_object = goal_sphere;
             new_AI.terrain_manager_game_object = terrain_manager_game_object;
-            new_AI.Aggressiveness = i;
+            new_AI.Aggressiveness = no_of_cars-i;
             new_AI.delay = 5*no_of_cars*((int)(i)); // Random.Range(0, no_of_cars*no_of_cars)*
             new_AI.my_color=my_color;
+
+            new_AI.ownPath = planner.plan(new_car.transform.position,goal_sphere.transform.position,my_color);
 
             //new_AI.my_goal = goal_sphere.transform.position;
             //var cubeRenderer = new_sphere.GetComponent<Renderer>();
@@ -81,6 +84,8 @@ public class GameManager : MonoBehaviour {
             //Call SetColor using the shader property name "_Color" and setting the color to red
             //cubeRenderer.material.SetColor("_Color", Color.cyan);
         }
+
+        
     }
 
     // Update is called once per frame

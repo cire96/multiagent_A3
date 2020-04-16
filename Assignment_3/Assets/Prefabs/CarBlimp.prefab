@@ -6027,6 +6027,7 @@ MonoBehaviour:
   h: 0
   v: 0
   handbrake: 0
+  speed: 0
 --- !u!114 &5781826396943105392
 MonoBehaviour:
   m_ObjectHideFlags: 0
