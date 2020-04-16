@@ -6097,6 +6097,7 @@ MonoBehaviour:
   targetIndex: 0
   avoidRange: 10
   planner: {fileID: 0}
+  backingCounter: 0
   Aggressiveness: 0
   my_color: {r: 0, g: 0, b: 0, a: 0}
   carHit: {fileID: 0}

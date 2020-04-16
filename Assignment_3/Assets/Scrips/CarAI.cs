@@ -29,7 +29,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public planner1 planner;
         public Graph mapGraph;
 
-        int backingCounter;
+        public int backingCounter;
         float capSpeed=20f;
 
         public int Aggressiveness;
@@ -177,7 +177,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if(6f>Vector3.Distance(transform.position,target) && targetIndex<ownPath.Count-1){
                 Vector3 tempTarget=mapGraph.getNode(ownPath[targetIndex+1]).getPosition();
                 float tempDistance = Vector3.Distance(transform.position,tempTarget);
-                bool tempHit = Physics.SphereCast(transform.position,2.0f,tempTarget-transform.position,out rayHit,tempDistance, wallMask);
+                bool tempHit = Physics.SphereCast(transform.position,1.8f,tempTarget-transform.position,out rayHit,tempDistance, wallMask);
                 if(!tempHit){
                    targetIndex++;
                     target = mapGraph.getNode(ownPath[targetIndex]).getPosition(); 
@@ -215,7 +215,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 if(capSpeed<m_Car.CurrentSpeed){
                     newSpeed=0;
                 }
-                //print("backing");
+                //print"backing");
                 m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
                 return;
             }
@@ -245,7 +245,7 @@ namespace UnityStandardAssets.Vehicles.Car
             bool hitCarLeft = Physics.Raycast(transform.position,transform.TransformDirection(Vector3.forward+new Vector3(-1,0,0)),out rayHit,6.0f, carMask);
 
             if(hitFinished){
-                newSpeed = -1;
+                newSteer = Mathf.Sign(newSteer);
             }
             if(hitCar){
                 //backingCounter = 2;
@@ -253,7 +253,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         
             if(hit){
-                backingCounter = 5;
+                backingCounter = 20;
             }else if(hitTurn){
                 if(newSteer>0.3){newSteer = Mathf.Sign(newSteer);}
                 
@@ -379,15 +379,30 @@ namespace UnityStandardAssets.Vehicles.Car
 
         }
 
-        private void OnCollisionStay(Collision collision){//probably better with underCollison
+        private void OnCollisionStay(Collision collision){
             if(collision.gameObject.tag == "Player"){
-                int colliderAggresivnes=collision.gameObject.GetComponent<CarAI>().Aggressiveness;
-                if( Aggressiveness>1 && colliderAggresivnes<Aggressiveness && newSpeed>0){
-                    Aggressiveness--;
-                }else if(colliderAggresivnes>Aggressiveness){
-                    Aggressiveness++;
+                RaycastHit rayHit;
+                LayerMask mask = LayerMask.GetMask("Car");
+                bool hit = Physics.SphereCast(transform.position,2.0f,transform.TransformDirection(Vector3.forward),out rayHit,6.0f, mask);
+
+                if(hit){
+                    carHit = rayHit.collider.transform.root.gameObject;
+
+                    if(collision.gameObject == carHit){ // The right game object?
+
+                        int colliderAggresivnes=collision.gameObject.GetComponent<CarAI>().Aggressiveness;
+                        if( Aggressiveness>1 && colliderAggresivnes<=Aggressiveness && newSpeed>0){
+                            Aggressiveness--;
+                        }
+                        else if(colliderAggresivnes>Aggressiveness){
+                            Aggressiveness++;
+                            }
+                        }
+
+                    }
                 }
-            }
+
+                
         }
     }
 }
