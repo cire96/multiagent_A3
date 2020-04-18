@@ -53,6 +53,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         Vector3 gizTarget;
         Vector3 gizTarget2;
+        Vector3 gizTarget3;
 
 
 
@@ -214,10 +215,15 @@ namespace UnityStandardAssets.Vehicles.Car
         void AlignToBall(){
             Vector3 target = ball.transform.position;
             Vector3 GoaltoTarget=(target - other_goal.transform.position).normalized;
-            Vector3 linePos=Vector3.Project(transform.position-target,GoaltoTarget);  
+            Vector3 linePos=Vector3.Project(transform.position-target,GoaltoTarget)+target;  
+            gizTarget3=linePos;
+            Debug.DrawRay(target,transform.rotation*new Vector3(0,0,1)*10f,Color.green);
+            Debug.DrawRay(target,-GoaltoTarget*10f,Color.green);
             if(30f>Vector3.Angle(transform.rotation*new Vector3(0,0,1),-GoaltoTarget) && 10>Vector3.Distance(transform.position,linePos)){
                 Shoot(target);
-            }else{Align(target,-1f,-1f);}
+            }else{
+                print("align to  shot");
+                Align(target,-1f,-1f);}
 
         }
         void Shoot(Vector3 target){
@@ -249,8 +255,8 @@ namespace UnityStandardAssets.Vehicles.Car
             Vector3 GoalToTarget = (target - other_goal.transform.position).normalized;  
             float disToTarget = Vector3.Distance(transform.position,target);
             Vector3 dynamicTarget;
-            Debug.DrawRay(target,transform.rotation*new Vector3(0,0,1)*10f,Color.red);
-            Debug.DrawRay(target,own_goalNormal*10f,Color.red);
+            //Debug.DrawRay(target,transform.rotation*new Vector3(0,0,1)*10f,Color.red);
+            //Debug.DrawRay(target,own_goalNormal*10f,Color.red);
 
             if(TargetToCar.x*own_goalNormal.x>0){
                 Vector3 v=new Vector3(-Mathf.Sign(own_goalNormal.x),0,Mathf.Sign(TargetToCar.z)).normalized; 
@@ -261,7 +267,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 
             }else{
                 
-                dynamicTarget=GoalToTarget*disToTarget*(0.1f*Mathf.Abs(target.z-transform.position.z))*0.35f+target;
+                dynamicTarget=GoalToTarget*disToTarget*(0.1f*Mathf.Abs(target.z-transform.position.z))*0.75f+target;
                 dynamicTarget=CapVtoField(transform.position,dynamicTarget, target);
                 /*
                 if(30>Vector3.Angle(transform.rotation*new Vector3(0,0,1),own_goalNormal) && 8>disToTarget){
@@ -382,6 +388,8 @@ namespace UnityStandardAssets.Vehicles.Car
             Gizmos.DrawSphere(gizTarget, 1);
             Gizmos.color = Color.blue;
             Gizmos.DrawSphere(gizTarget2, 2);
+             Gizmos.color = Color.green;
+            Gizmos.DrawSphere(gizTarget3, 1);
         }
 
 
