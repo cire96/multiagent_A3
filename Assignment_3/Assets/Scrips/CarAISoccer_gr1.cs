@@ -16,6 +16,8 @@ namespace UnityStandardAssets.Vehicles.Car
     {
         
         private CarController m_Car; // the car controller we want to use
+        public WheelCollider[] WheelColliders;
+        float slideLimit=0.3f;
 
         public GameObject terrain_manager_game_object;
         TerrainManager terrain_manager;
@@ -39,6 +41,7 @@ namespace UnityStandardAssets.Vehicles.Car
         GameObject activeShooter;
         GameObject Goalie;
         int oldScore=0;
+        float ballCentreHeight;
 
         //Def
         GameObject defTarget;
@@ -54,12 +57,15 @@ namespace UnityStandardAssets.Vehicles.Car
         Vector3 gizTarget;
         Vector3 gizTarget2;
         Vector3 gizTarget3;
+        public bool checkSkid;
 
         // SlipLimit = 0.3 apparently
 
         private void Start()
         {
             // get the car controller
+            WheelColliders = GetComponentsInChildren<WheelCollider>();
+
             ball = GameObject.FindGameObjectWithTag("Ball");
             m_Car = GetComponent<CarController>();
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
@@ -225,8 +231,9 @@ namespace UnityStandardAssets.Vehicles.Car
             Debug.DrawRay(target,-GoaltoTarget*10f,Color.green);
             if(30f>Vector3.Angle(transform.rotation*new Vector3(0,0,1),-GoaltoTarget) && 10>Vector3.Distance(transform.position,linePos)){
                 Shoot(target);
+            }
 
-            else if () // Waka waka
+            else if (false){ // Waka waka
 
             }else{
                 Align(target,-1f,-1f);}
@@ -384,6 +391,28 @@ namespace UnityStandardAssets.Vehicles.Car
             return V;
         }
 
+
+        bool skiding(){
+
+            for (int i = 0; i < 4; i++)
+            {
+                WheelHit wheelHit;
+                WheelColliders[i].GetGroundHit(out wheelHit);
+
+                // is the tire slipping above the given threshhold
+                if (Mathf.Abs(wheelHit.forwardSlip) >= slideLimit || (Mathf.Abs(wheelHit.sidewaysSlip) >= slideLimit))
+                {
+                    print("forward"+(Mathf.Abs(wheelHit.forwardSlip)).ToString());
+                    print("side"+(Mathf.Abs(wheelHit.sidewaysSlip)).ToString());
+                    
+                    
+                    return true;
+                }
+            }
+            return false;
+            
+        }
+
         void OnDrawGizmos(){
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(gizTarget, 1);
@@ -433,6 +462,8 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
             }
             Goalie=tempGoalie;
+
+            checkSkid=skiding();
 
             
             
