@@ -55,7 +55,7 @@ namespace UnityStandardAssets.Vehicles.Car
         Vector3 gizTarget2;
         Vector3 gizTarget3;
 
-
+        // SlipLimit = 0.3 apparently
 
         private void Start()
         {
@@ -123,13 +123,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Debugger debugger = (Debugger)this.gameObject.AddComponent(typeof(Debugger));
             debugger.BehaviorTree = behaviorTree;
 #endif
-            
 
-            
-
-
-            // Plan your path here
-            // ...
         }
 
         //Def
@@ -182,13 +176,23 @@ namespace UnityStandardAssets.Vehicles.Car
             }
         }
 
-        void InterceptEnemy(){
+        void InterceptEnemy(){ // Implement the equations for missile interception (from the lectures)
             if(defTarget==ball){
                 Align(defTarget.transform.position,-1,-1);
             }else{
                 Drive(defTarget.transform.position,-1);
             }
 
+        }
+
+        bool checkAirborne(){
+            float threshold = 4.0f; // Check if ball above this height
+            ballCentreHeight = ball.transform.position.y;
+            bool ballInAir = false;
+            if(ballCentreHeight > threshold){
+                ballInAir = true;
+            }
+            return ballInAir;
         }
 
 
@@ -221,13 +225,14 @@ namespace UnityStandardAssets.Vehicles.Car
             Debug.DrawRay(target,-GoaltoTarget*10f,Color.green);
             if(30f>Vector3.Angle(transform.rotation*new Vector3(0,0,1),-GoaltoTarget) && 10>Vector3.Distance(transform.position,linePos)){
                 Shoot(target);
+
+            else if () // Waka waka
+
             }else{
-                print("align to  shot");
                 Align(target,-1f,-1f);}
 
         }
         void Shoot(Vector3 target){
-            print("Shoot");
             gizTarget=target;
             Drive(target,-1f);
 
@@ -267,15 +272,15 @@ namespace UnityStandardAssets.Vehicles.Car
                 
             }else{
                 
-                dynamicTarget=GoalToTarget*disToTarget*(0.1f*Mathf.Abs(target.z-transform.position.z))*0.75f+target;
-                dynamicTarget=CapVtoField(transform.position,dynamicTarget, target);
-                /*
+                dynamicTarget=GoalToTarget*disToTarget*(0.1f*Mathf.Abs(target.z-transform.position.z))*0.45f+target;
+                dynamicTarget=CapVtoField(transform.position,dynamicTarget,target);
+                
                 if(30>Vector3.Angle(transform.rotation*new Vector3(0,0,1),own_goalNormal) && 8>disToTarget){
                     Braking(0f);
                     return;
                 
                 }
-                */
+                
                 //Gizmos.DrawCube(dynamicTarget, new Vector3(1, 1, 1));
 
                 Drive(dynamicTarget,capSpeedSecond);
@@ -321,9 +326,6 @@ namespace UnityStandardAssets.Vehicles.Car
                 return;
             }*/
 
-
-
-
             if(backingCounter>0){
                 backingCounter--;
                 newSteer = -Mathf.Sign(newSteer);
@@ -331,13 +333,12 @@ namespace UnityStandardAssets.Vehicles.Car
                     newSteer = -1f;
                 }
                 newSpeed = -1;
-                print("backing");
                 m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
                 return;
             }
 
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
-            bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,6.0f);
+            bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,3.5f);
             if(hit && rayHit.collider.transform.root.gameObject.tag == "Untagged"){
                 backingCounter = 20;
             }
@@ -353,7 +354,6 @@ namespace UnityStandardAssets.Vehicles.Car
             if(0<speedCap && m_Car.CurrentSpeed>speedCap){
                 newSpeed=0;
             }
-            
 
             m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
             Debug.DrawLine(transform.position,target,Color.yellow);
@@ -363,13 +363,14 @@ namespace UnityStandardAssets.Vehicles.Car
         Vector3 CapVtoField(Vector3 Start,Vector3 V, Vector3 target){
             // start is the car, V is the position of the dynamic target. target is the "static" target, like the ball, or the position to realign to.
             RaycastHit rayHit;
-            bool hit = Physics.SphereCast(Start, 0.1f, V-Start,out rayHit,(V-Start).magnitude); // Raycast from the car to the dynamic target. If there is a wall in the way, we should choose 
+            target.y = 0;
+            bool hit = Physics.SphereCast(Start, 0.001f, V-Start,out rayHit,(V-Start).magnitude); // Raycast from the car to the dynamic target. If there is a wall in the way, we should choose 
             if(hit && rayHit.collider.transform.root.gameObject.tag == "Untagged"){
                 
                 //V = rayHit.point; // Puts V to be the position of the raycast hit on the wall, from the car to the dynamic target.
 
-                
-                hit = Physics.SphereCast(target, 0.1f, V-target,out rayHit,(V-target).magnitude);
+                // Reduce to only needing one spherecast, the latter.
+                hit = Physics.SphereCast(target, 0.001f, V-target,out rayHit,(V-target).magnitude);
 
                 if(hit && rayHit.collider.transform.root.gameObject.tag == "Untagged"){
                     
