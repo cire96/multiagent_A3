@@ -263,10 +263,13 @@ namespace UnityStandardAssets.Vehicles.Car
                 
                 dynamicTarget=GoalToTarget*disToTarget*(0.1f*Mathf.Abs(target.z-transform.position.z))*0.35f+target;
                 dynamicTarget=CapVtoField(transform.position,dynamicTarget, target);
+                /*
                 if(30>Vector3.Angle(transform.rotation*new Vector3(0,0,1),own_goalNormal) && 8>disToTarget){
                     Braking(0f);
                     return;
+                
                 }
+                */
                 //Gizmos.DrawCube(dynamicTarget, new Vector3(1, 1, 1));
 
                 Drive(dynamicTarget,capSpeedSecond);
@@ -297,8 +300,6 @@ namespace UnityStandardAssets.Vehicles.Car
 
         void Drive(Vector3 target,float speedCap){
             RaycastHit rayHit;
-            LayerMask wallMask = LayerMask.GetMask("Wall");
-            LayerMask carMask = LayerMask.GetMask("Car");
 
             Vector3 carToTarget = m_Car.transform.InverseTransformPoint(target);
             newSteer = (carToTarget.x / carToTarget.magnitude);
@@ -320,6 +321,9 @@ namespace UnityStandardAssets.Vehicles.Car
             if(backingCounter>0){
                 backingCounter--;
                 newSteer = -Mathf.Sign(newSteer);
+                if(newSteer == 0f){
+                    newSteer = -1f;
+                }
                 newSpeed = -1;
                 print("backing");
                 m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
@@ -327,9 +331,16 @@ namespace UnityStandardAssets.Vehicles.Car
             }
 
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
-            bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,6.0f, wallMask);
-            bool hitCar = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,6.0f, carMask);
-            if(hit || hitCar){
+            bool hit = Physics.SphereCast(transform.position,2.0f,steeringPoint,out rayHit,6.0f);
+            if(hit && rayHit.collider.transform.root.gameObject.tag == "Untagged"){
+                backingCounter = 20;
+            }
+
+            if(hit && rayHit.collider.transform.root.gameObject.tag == enemy_tag){
+                backingCounter = 7;
+            }
+
+            if(hit && rayHit.collider.transform.root.gameObject.tag == friend_tag){
                 backingCounter = 7;
             }
 
@@ -346,17 +357,19 @@ namespace UnityStandardAssets.Vehicles.Car
         Vector3 CapVtoField(Vector3 Start,Vector3 V, Vector3 target){
             // start is the car, V is the position of the dynamic target. target is the "static" target, like the ball, or the position to realign to.
             RaycastHit rayHit;
-            LayerMask wallMask = LayerMask.GetMask("Wall");
-            bool hit = Physics.SphereCast(Start, 0.1f, V-Start,out rayHit,(V-Start).magnitude, wallMask); // Raycast from the car to the dynamic target. If there is a wall in the way, we should choose 
-            if(hit){
+            bool hit = Physics.SphereCast(Start, 0.1f, V-Start,out rayHit,(V-Start).magnitude); // Raycast from the car to the dynamic target. If there is a wall in the way, we should choose 
+            if(hit && rayHit.collider.transform.root.gameObject.tag == "Untagged"){
                 
                 //V = rayHit.point; // Puts V to be the position of the raycast hit on the wall, from the car to the dynamic target.
 
                 
-                hit = Physics.SphereCast(target, 0.1f, V-target,out rayHit,(V-target).magnitude, wallMask);
+                hit = Physics.SphereCast(target, 0.1f, V-target,out rayHit,(V-target).magnitude);
 
-                if(hit){
+                if(hit && rayHit.collider.transform.root.gameObject.tag == "Untagged"){
+                    
                     V = rayHit.point;
+                    Vector3 adjustVec = (V-target).normalized;
+                    V += -10f*adjustVec;
                 }
                 
 
