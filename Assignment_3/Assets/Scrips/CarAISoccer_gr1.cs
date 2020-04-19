@@ -134,7 +134,17 @@ namespace UnityStandardAssets.Vehicles.Car
 
         //Def
         public bool CheckDefPos(){
-            if(own_goal.transform.position.x < transform.position.x && transform.position.x < ball.transform.position.x){
+
+            float ownDis = Mathf.Abs((transform.position - own_goal.transform.position).x);
+            float ballDis = Mathf.Abs((ball.transform.position - own_goal.transform.position).x);
+
+            //if(transform.position.x < ball.transform.position.x){ 
+
+            if(Goalie==gameObject){
+                return true;
+            }
+
+            if(ownDis < ballDis){
                 return true;
             }
             return false;
@@ -148,8 +158,11 @@ namespace UnityStandardAssets.Vehicles.Car
             if(Goalie!=gameObject){
                 Drive(ball.transform.position,-1);
             }else{
-                if(45f>Vector3.Distance(own_goal.transform.position,ball.transform.position)){
-                    Drive(ball.transform.position,-1);
+                float ballDis = Mathf.Abs((ball.transform.position - own_goal.transform.position).x);
+                //if(200f>Vector3.Distance(own_goal.transform.position,ball.transform.position)){
+                if(60f>ballDis){
+                    //Drive(ball.transform.position,-1);
+                    Align(ball.transform.position, -1, -1);
                 }else{
                     SupportRealign();
                 }
@@ -170,7 +183,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
                 
                 foreach(GameObject enemy in listEnemies){
-                    if(other_goal.transform.position.x > enemy.transform.position.x &&  enemy.transform.position.x > ball.transform.position.x){
+
+                    float enemyDis = Mathf.Abs((enemy.transform.position - other_goal.transform.position).x); // x-distance from enemy goal to enemy
+                    float ballDis = Mathf.Abs((ball.transform.position - other_goal.transform.position).x); // x-distance from enemy goal to ball
+
+                    //if(other_goal.transform.position.x > enemy.transform.position.x &&  enemy.transform.position.x > ball.transform.position.x){ // If enemy is between goal and ball?
+                    if(enemyDis < ballDis){
                         if(tempMin>Vector3.Distance(enemy.transform.position,ball.transform.position)){
                             tempMin = Vector3.Distance(enemy.transform.position,ball.transform.position);
                             targetMin=enemy;
@@ -249,16 +267,19 @@ namespace UnityStandardAssets.Vehicles.Car
         void SupportRealign(){
             Vector3 target;
             if(gameObject==Goalie){
-                target = own_goal.transform.position+new Vector3(30,0,0);
+                target = own_goal.transform.position + own_goalNormal.x*(new Vector3(30,0,0));
                 float disToTarget = Vector3.Distance(transform.position,target);
                 if(30>Vector3.Angle(transform.rotation*new Vector3(0,0,1),own_goalNormal) && 8>disToTarget){
                     Braking(0f);
                     
-                }else{Align(target,30f,20f);}
+                }//else{Align(target,-1f,-1f);}
+                else{Align(target,30f,20f);}
                 
             }else{
-                target = own_goal.transform.position+new Vector3(70,0,0);
+                target = own_goal.transform.position+own_goalNormal.x*(new Vector3(70,0,0));
+                //Align(target,-1f,-1f);
                 Align(target,30f,20f);
+
             }
         }
 
@@ -270,7 +291,7 @@ namespace UnityStandardAssets.Vehicles.Car
             //Debug.DrawRay(target,transform.rotation*new Vector3(0,0,1)*10f,Color.red);
             //Debug.DrawRay(target,own_goalNormal*10f,Color.red);
 
-            if(TargetToCar.x*own_goalNormal.x>0){
+            if(TargetToCar.x*own_goalNormal.x>0){ // Which side of the ball the car is on
                 Vector3 v=new Vector3(-Mathf.Sign(own_goalNormal.x),0,Mathf.Sign(TargetToCar.z)).normalized; 
                 dynamicTarget = v*1.5f*disToTarget+target;
                 dynamicTarget=CapVtoField(transform.position,dynamicTarget, target);
@@ -327,12 +348,6 @@ namespace UnityStandardAssets.Vehicles.Car
                 handBrake = 1f;
             }
 
-            /*if(5>Vector3.Distance(transform.position,target)){
-                //Braking(newSteer);
-                m_Car.Move(newSteer,0,0,handBrake);
-                return;
-            }*/
-
             if(backingCounter>0){
                 backingCounter--;
                 newSteer = -Mathf.Sign(newSteer);
@@ -342,6 +357,13 @@ namespace UnityStandardAssets.Vehicles.Car
                 newSpeed = -1;
                 m_Car.Move(newSteer, newSpeed, newSpeed, handBrake);
                 return;
+            }
+
+            checkSkid=skidding();
+
+            if(checkSkid){
+                handBrake = 0f;
+                newSpeed = 0f;
             }
 
             Vector3 steeringPoint = (transform.rotation * new Vector3(0,0,1));
@@ -392,7 +414,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
 
-        bool skiding(){
+        bool skidding(){
 
             for (int i = 0; i < 4; i++)
             {
@@ -400,10 +422,10 @@ namespace UnityStandardAssets.Vehicles.Car
                 WheelColliders[i].GetGroundHit(out wheelHit);
 
                 // is the tire slipping above the given threshhold
-                if (Mathf.Abs(wheelHit.forwardSlip) >= slideLimit || (Mathf.Abs(wheelHit.sidewaysSlip) >= slideLimit))
+                if ((Mathf.Abs(wheelHit.sidewaysSlip) >= slideLimit))
                 {
-                    print("forward"+(Mathf.Abs(wheelHit.forwardSlip)).ToString());
-                    print("side"+(Mathf.Abs(wheelHit.sidewaysSlip)).ToString());
+                    //print("forward"+(Mathf.Abs(wheelHit.forwardSlip)).ToString());
+                    //print("side"+(Mathf.Abs(wheelHit.sidewaysSlip)).ToString());
                     
                     
                     return true;
@@ -451,19 +473,19 @@ namespace UnityStandardAssets.Vehicles.Car
                 blackboard["OtherTeamAttack"]=false;
             }
 
-            float tempMin=1000;
+            float tempMin=1000f;
             GameObject tempGoalie=gameObject;
             foreach(GameObject friend in friends){
                 if(friend!=activeShooter){
-                    if(tempMin>friend.transform.position.x){
-                        tempMin=friend.transform.position.x;
+                    float friendDis = Mathf.Abs((friend.transform.position - own_goal.transform.position).x);
+                    if(tempMin>friendDis){
+                        tempMin=friendDis;
                         tempGoalie=friend;
                     }
                 }
             }
             Goalie=tempGoalie;
 
-            checkSkid=skiding();
 
             
             
