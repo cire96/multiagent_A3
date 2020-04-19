@@ -467,20 +467,39 @@ namespace UnityStandardAssets.Vehicles.Car
             float drag = ballRigidbody.drag;
             positionList.Add(pos);
             float elapsedTime = 0.0f;
+
+            Vector3 landPos = new Vector3 (0, 0, 0);
             
-            while(pos.y>=2.3f)
+            for(int i = 0; i < maxIterations; i++)
             {
                 vel = vel + (Physics.gravity * Time.fixedDeltaTime);
                 vel *= drag;
                 pos += vel * Time.fixedDeltaTime;
                 elapsedTime += Time.fixedDeltaTime;
                 positionList.Add(pos);
+
+                if(pos.y < 2.25f){
+                    landPos = pos;
+                    break;
+                }
+
             }
 
-            float disToLanding = Vector3.Distance(transform.position,pos);
+            float mphSpeed = -1f;
+
+
+            if(landPos != new Vector3 (0, 0, 0)){
+            float disToLanding = Vector3.Distance(transform.position,landPos);
             float minSpeed = disToLanding/elapsedTime;
-            float mphSpeed = minSpeed/0.44704f;//convert m/s to mph
-            return (mphSpeed, pos);
+            mphSpeed = minSpeed/0.44704f;//convert m/s to mph
+            }
+
+            else{
+                mphSpeed = -1f;
+                landPos = ball.transform.position;
+            }
+
+            return (mphSpeed, landPos);
 
         }
 
