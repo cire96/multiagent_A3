@@ -155,14 +155,23 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void InterceptBall(){
+            Vector3 target = ball.transform.position;
+            float speedCap = -1f;
             if(Goalie!=gameObject){
-                Drive(ball.transform.position,-1);
+                if(target.y > 4f){
+                    (speedCap,target)=calcInAirSpeed();
+                }
+                Drive(target,speedCap);
             }else{
                 float ballDis = Mathf.Abs((ball.transform.position - own_goal.transform.position).x);
                 //if(200f>Vector3.Distance(own_goal.transform.position,ball.transform.position)){
                 if(60f>ballDis){
                     //Drive(ball.transform.position,-1);
-                    Align(ball.transform.position, -1, -1);
+                    if(target.y > 4f){
+                        (speedCap,target)=calcInAirSpeed();
+                    }
+                    
+                    Align(target, -1, speedCap);
                 }else{
                     SupportRealign();
                 }
@@ -258,6 +267,10 @@ namespace UnityStandardAssets.Vehicles.Car
 
         }
         void Shoot(Vector3 target){
+            float speedCap=-1f;
+            if(target.y > 4f){
+                (speedCap,target)=calcInAirSpeed();
+            }
             gizTarget=target;
             Drive(target,-1f);
 
@@ -338,8 +351,11 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         void Drive(Vector3 target,float speedCap){
-            RaycastHit rayHit;
+            /*if(target.y > 4f){
+                (speedCap,target)=calcInAirSpeed();
+            }*/
 
+            RaycastHit rayHit;
             Vector3 carToTarget = m_Car.transform.InverseTransformPoint(target);
             newSteer = (carToTarget.x / carToTarget.magnitude);
             newSpeed=1;
@@ -433,6 +449,39 @@ namespace UnityStandardAssets.Vehicles.Car
             }
             return false;
             
+        }
+
+        (float,Vector3) calcInAirSpeed(){
+            // C#
+            List<Vector3> positionList;
+            // ...
+            
+            positionList = new List<Vector3>();
+            // ...
+            
+            // Example maximum of 5 seconds
+            int maxIterations = Mathf.RoundToInt(5.0f / Time.fixedDeltaTime);
+            Vector3 pos = ball.transform.position;
+            Rigidbody ballRigidbody = ball.GetComponent<Rigidbody>();
+            Vector3 vel = ballRigidbody.velocity;
+            float drag = ballRigidbody.drag;
+            positionList.Add(pos);
+            float elapsedTime = 0.0f;
+            
+            while(pos.y>=2.3f)
+            {
+                vel = vel + (Physics.gravity * Time.fixedDeltaTime);
+                vel *= drag;
+                pos += vel * Time.fixedDeltaTime;
+                elapsedTime += Time.fixedDeltaTime;
+                positionList.Add(pos);
+            }
+
+            float disToLanding = Vector3.Distance(transform.position,pos);
+            float minSpeed = disToLanding/elapsedTime;
+            float mphSpeed = minSpeed/0.44704f;//convert m/s to mph
+            return (mphSpeed, pos);
+
         }
 
         void OnDrawGizmos(){
