@@ -158,7 +158,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Vector3 target = ball.transform.position;
             float speedCap = -1f;
             if(Goalie!=gameObject){
-                if(target.y > 4f){
+                if(target.y > 2.4f){
                     (speedCap,target)=calcInAirSpeed();
                 }
                 Drive(target,speedCap);
@@ -167,7 +167,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 //if(200f>Vector3.Distance(own_goal.transform.position,ball.transform.position)){
                 if(60f>ballDis){
                     //Drive(ball.transform.position,-1);
-                    if(target.y > 4f){
+                    if(target.y > 2.4f){
                         (speedCap,target)=calcInAirSpeed();
                     }
                     
@@ -268,7 +268,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
         void Shoot(Vector3 target){
             float speedCap=-1f;
-            if(target.y > 4f){
+            if(target.y > 2.4f){
                 (speedCap,target)=calcInAirSpeed();
             }
             gizTarget=target;
@@ -279,6 +279,7 @@ namespace UnityStandardAssets.Vehicles.Car
         
         void SupportRealign(){
             Vector3 target;
+            
             if(gameObject==Goalie){
                 target = own_goal.transform.position + own_goalNormal.x*(new Vector3(30,0,0));
                 float disToTarget = Vector3.Distance(transform.position,target);
@@ -289,9 +290,15 @@ namespace UnityStandardAssets.Vehicles.Car
                 else{Align(target,30f,20f);}
                 
             }else{
-                target = own_goal.transform.position+own_goalNormal.x*(new Vector3(70,0,0));
+                target = new Vector3(ball.transform.position.x,0,100)-own_goalNormal.x*(new Vector3(20,0,0));
+                Vector3 GoaltoTarget=(target - other_goal.transform.position).normalized;
+                Vector3 linePos=Vector3.Project(transform.position-target,GoaltoTarget)+target;  
                 //Align(target,-1f,-1f);
-                Align(target,30f,20f);
+                if(30f>Vector3.Angle(transform.rotation*new Vector3(0,0,1),-GoaltoTarget) && 10>Vector3.Distance(transform.position,linePos) && m_Car.CurrentSpeed>Vector3.Distance(transform.position,target)){
+                    Braking(0f);
+                }else{
+                    Align(target,60f,80f);
+                }
 
             }
         }
@@ -473,12 +480,12 @@ namespace UnityStandardAssets.Vehicles.Car
             for(int i = 0; i < maxIterations; i++)
             {
                 vel = vel + (Physics.gravity * Time.fixedDeltaTime);
-                vel *= drag;
+                //vel *= drag;
                 pos += vel * Time.fixedDeltaTime;
                 elapsedTime += Time.fixedDeltaTime;
                 positionList.Add(pos);
 
-                if(pos.y < 2.25f){
+                if(pos.y < 2.4f){
                     landPos = pos;
                     break;
                 }
@@ -498,6 +505,9 @@ namespace UnityStandardAssets.Vehicles.Car
                 mphSpeed = -1f;
                 landPos = ball.transform.position;
             }
+            print("vel "+vel.ToString());
+
+            print("pos: "+pos.ToString()+ " || "+ball.transform.position.ToString()+ " || "+mphSpeed.ToString());
 
             return (mphSpeed, landPos);
 
